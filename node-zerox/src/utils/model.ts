@@ -87,6 +87,11 @@ const providerDefaultParams: Record<ModelProvider | string, LLMParams> = {
     temperature: 0,
     topP: 1,
   },
+  [ModelProvider.CLAUDE]: {
+    maxTokens: 4000,
+    temperature: 0,
+    topP: 1,
+  },
 };
 
 export const validateLLMParams = <T extends LLMParams>(

@@ -6,12 +6,14 @@ import {
   ModelInterface,
   ModelProvider,
   OpenAICredentials,
+  ClaudeCredentials,
 } from "../types";
 import { validateLLMParams } from "../utils/model";
 import AzureModel from "./azure";
 import BedrockModel from "./bedrock";
 import GoogleModel from "./google";
 import OpenAIModel from "./openAI";
+import ClaudeModel from "./claude";
 
 // Type guard for Azure credentials
 const isAzureCredentials = (
@@ -45,6 +47,13 @@ const isOpenAICredentials = (
   return credentials && typeof credentials.apiKey === "string";
 };
 
+// Type guard for Claude credentials
+const isClaudeCredentials = (
+  credentials: any
+): credentials is ClaudeCredentials => {
+  return credentials && typeof credentials.apiKey === "string";
+};
+
 export const createModel = ({
   credentials,
   llmParams,
@@ -74,6 +83,11 @@ export const createModel = ({
         throw new Error("Invalid credentials for OpenAI provider");
       }
       return new OpenAIModel(credentials, model, validatedParams);
+    case ModelProvider.CLAUDE:
+      if (!isClaudeCredentials(credentials)) {
+        throw new Error("Invalid credentials for Claude provider");
+      }
+      return new ClaudeModel(credentials, model, validatedParams);
     default:
       throw new Error(`Unsupported model provider: ${provider}`);
   }

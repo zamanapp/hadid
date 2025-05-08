@@ -242,6 +242,10 @@ export const zerox = async ({
         });
       }
 
+      console.log(credentials);
+      console.log(model);
+      console.log(modelProvider);
+
       // Start processing OCR using LLM
       const modelInstance = createModel({
         credentials,

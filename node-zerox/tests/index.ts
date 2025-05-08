@@ -1,5 +1,5 @@
 import { compareKeywords } from "./utils";
-import { ModelOptions } from "../src/types";
+import { ModelOptions, ModelProvider } from "../src/types";
 import { zerox } from "../src";
 import dotenv from "dotenv";
 import fs from "node:fs";
@@ -43,13 +43,18 @@ async function main() {
           return null;
         }
 
+        console.log(process.env.CLAUDE_API_KEY as string);
+
         // Run OCR on the file
         const ocrResult = await zerox({
           cleanup: false,
           filePath,
           maintainFormat: false,
-          model: ModelOptions.OPENAI_GPT_4O,
-          openaiAPIKey: process.env.OPENAI_API_KEY,
+          model: ModelOptions.ANTHROPIC_CLAUDE_3_5_HAIKU,
+          modelProvider: ModelProvider.CLAUDE,
+          credentials: {
+            apiKey: process.env.CLAUDE_API_KEY as string,
+          },
           outputDir: OUTPUT_DIR,
           tempDir: TEMP_DIR,
         });

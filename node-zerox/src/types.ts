@@ -73,11 +73,16 @@ export interface OpenAICredentials {
   apiKey: string;
 }
 
+export interface ClaudeCredentials {
+  apiKey: string;
+}
+
 export type ModelCredentials =
   | AzureCredentials
   | BedrockCredentials
   | GoogleCredentials
-  | OpenAICredentials;
+  | OpenAICredentials
+  | ClaudeCredentials;
 
 export enum ModelOptions {
   // Bedrock Claude 3 Models
@@ -101,6 +106,15 @@ export enum ModelOptions {
   GOOGLE_GEMINI_2_5_PRO = "gemini-2.5-pro-preview-03-25",
   GOOGLE_GEMINI_2_FLASH = "gemini-2.0-flash-001",
   GOOGLE_GEMINI_2_FLASH_LITE = "gemini-2.0-flash-lite-preview-02-05",
+
+  // Anthropic Claude Models
+  ANTHROPIC_CLAUDE_3_7_SONNET = "claude-3-7-sonnet-20250219",
+  ANTHROPIC_CLAUDE_3_5_HAIKU = "claude-3-5-haiku-20241022",
+  ANTHROPIC_CLAUDE_3_5_SONNET_V2 = "claude-3-5-sonnet-20241022",
+  ANTHROPIC_CLAUDE_3_5_SONNET = "claude-3-5-sonnet-20240620",
+  ANTHROPIC_CLAUDE_3_OPUS = "claude-3-opus-20240229",
+  ANTHROPIC_CLAUDE_3_SONNET = "claude-3-sonnet-20240229",
+  ANTHROPIC_CLAUDE_3_HAIKU = "claude-3-haiku-20240307",
 }
 
 export enum ModelProvider {
@@ -108,6 +122,7 @@ export enum ModelProvider {
   BEDROCK = "BEDROCK",
   GOOGLE = "GOOGLE",
   OPENAI = "OPENAI",
+  CLAUDE = "CLAUDE",
 }
 
 export enum OperationMode {
@@ -223,12 +238,17 @@ export interface OpenAILLMParams extends BaseLLMParams {
   maxTokens: number;
 }
 
+export interface ClaudeLLMParams extends BaseLLMParams {
+  maxTokens: number;
+}
+
 // Union type of all provider params
 export type LLMParams =
   | AzureLLMParams
   | BedrockLLMParams
   | GoogleLLMParams
-  | OpenAILLMParams;
+  | OpenAILLMParams
+  | ClaudeLLMParams;
 
 export interface LogprobPage {
   page: number | null;
