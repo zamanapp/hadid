@@ -1,10 +1,5 @@
-import { compareKeywords } from "./utils";
 import { ModelOptions, ModelProvider } from "../src/types";
 import { zerox } from "../src";
-import dotenv from "dotenv";
-import fs from "node:fs";
-import path from "node:path";
-import pLimit from "p-limit";
 
 async function main() {
   const prompt = `You are a specialized document parser that converts documents into structured formats. Your task is to analyze the provided document and return a clean, well-formatted JSON object containing both markdown representation and relevant tags.
@@ -77,8 +72,7 @@ Processing Instructions:
 Do not include any text outside the JSON structure. Your entire response should be valid, parseable JSON.`;
 
   const result = await zerox({
-    filePath:
-      "https://assets.anthropic.com/m/1cd9d098ac3e6467/original/Claude-3-Model-Card-October-Addendum.pdf",
+    filePath: "/Users/fazasophian/Projects/zerox-claude/shared/inputs/0003.pdf",
     credentials: {
       apiKey: process.env.CLAUDE_API_KEY as string,
     },

@@ -8,7 +8,7 @@
     "build": "npm run clean && tsc -p node-zerox/tsconfig.json",
     "postinstall": "node node-zerox/scripts/install-dependencies.js",
     "prepublishOnly": "npm run build",
-    "test": "ts-node node-zerox/tests/test.ts",
+    "test": "ts-node node-zerox/tests/index.ts",
     "test:performance": "jest node-zerox/tests/performance.test.ts --runInBand"
   },
   "author": "tylermaran",
