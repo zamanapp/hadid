@@ -19,6 +19,7 @@ import { ASPECT_RATIO_THRESHOLD } from "../constants";
 import {
   ConvertPdfOptions,
   ExcelSheetContent,
+  ModelInterface,
   Page,
   PageStatus,
 } from "../types";
@@ -153,13 +154,13 @@ export const convertFileToPdf = async ({
 export const convertPdfToImages = async ({
   imageDensity = 300,
   imageHeight = 2048,
-  pagesToConvertAsImages,
+  pagesToProcess,
   pdfPath,
   tempDir,
 }: {
   imageDensity?: number;
   imageHeight?: number;
-  pagesToConvertAsImages: number | number[];
+  pagesToProcess: number | number[];
   pdfPath: string;
   tempDir: string;
 }): Promise<string[]> => {
@@ -182,7 +183,7 @@ export const convertPdfToImages = async ({
     try {
       const storeAsImage = fromPath(pdfPath, options);
       const convertResults: WriteImageResponse[] = await storeAsImage.bulk(
-        pagesToConvertAsImages
+        pagesToProcess
       );
       // Validate that all pages were converted
       return convertResults.map((result) => {
@@ -192,11 +193,7 @@ export const convertPdfToImages = async ({
         return result.path;
       });
     } catch (err) {
-      return await convertPdfWithPoppler(
-        pagesToConvertAsImages,
-        pdfPath,
-        options
-      );
+      return await convertPdfWithPoppler(pagesToProcess, pdfPath, options);
     }
   } catch (err) {
     console.error("Error during PDF conversion:", err);
@@ -275,7 +272,7 @@ export const convertExcelToHtml = async (
 
 // Alternative PDF to PNG conversion using Poppler
 const convertPdfWithPoppler = async (
-  pagesToConvertAsImages: number | number[],
+  pagesToProcess: number | number[],
   pdfPath: string,
   options: ConvertPdfOptions
 ): Promise<string[]> => {
@@ -288,12 +285,12 @@ const convertPdfWithPoppler = async (
     await execAsync(cmd);
   };
 
-  if (pagesToConvertAsImages === -1) {
+  if (pagesToProcess === -1) {
     await run();
-  } else if (typeof pagesToConvertAsImages === "number") {
-    await run(pagesToConvertAsImages, pagesToConvertAsImages);
-  } else if (Array.isArray(pagesToConvertAsImages)) {
-    await Promise.all(pagesToConvertAsImages.map((page) => run(page, page)));
+  } else if (typeof pagesToProcess === "number") {
+    await run(pagesToProcess, pagesToProcess);
+  } else if (Array.isArray(pagesToProcess)) {
+    await Promise.all(pagesToProcess.map((page) => run(page, page)));
   }
 
   const convertResults = await fs.readdir(savePath);
@@ -307,19 +304,43 @@ const convertPdfWithPoppler = async (
 
 // Extracts pages from a structured data file (like Excel)
 export const extractPagesFromStructuredDataFile = async (
-  filePath: string
+  filePath: string,
+  modelInstance: ModelInterface,
+  convertSpreadsheetToMarkdown: boolean,
+  pagesToProcess: number | number[]
 ): Promise<Page[]> => {
   if (isExcelFile(filePath)) {
-    const sheets = await convertExcelToHtml(filePath);
+    const allSheets = await convertExcelToHtml(filePath);
+    const sheets =
+      pagesToProcess === -1
+        ? allSheets
+        : Array.isArray(pagesToProcess)
+        ? allSheets.filter((_, index) => pagesToProcess.includes(index + 1))
+        : allSheets.slice(0, pagesToProcess);
+
     const pages: Page[] = [];
-    sheets.forEach((sheet: ExcelSheetContent, index: number) => {
-      pages.push({
-        content: sheet.content,
-        contentLength: sheet.contentLength,
-        page: index + 1,
-        status: PageStatus.SUCCESS,
+    if (convertSpreadsheetToMarkdown) {
+      await Promise.all(
+        sheets.map(async (sheet: ExcelSheetContent, index: number) => {
+          pages[index] = {
+            content: await modelInstance.convertHtmlToMarkdown(sheet.content),
+            contentLength: sheet.contentLength,
+            page: index + 1,
+            status: PageStatus.SUCCESS,
+          };
+        })
+      );
+    } else {
+      sheets.forEach((sheet: ExcelSheetContent, index: number) => {
+        pages.push({
+          content: sheet.content,
+          contentLength: sheet.contentLength,
+          page: index + 1,
+          status: PageStatus.SUCCESS,
+        });
       });
-    });
+    }
+
     return pages;
   }
 

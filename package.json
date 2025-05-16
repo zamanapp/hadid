@@ -1,7 +1,7 @@
 {
-  "name": "zerox",
+  "name": "zaman-ocr",
   "version": "1.1.19",
-  "description": "ocr documents using gpt-4o-mini",
+  "description": "OCR documents using OpenAI, Claude, Azure, and Google. Forked from @getomni-ai/zerox",
   "main": "node-zerox/dist/index.js",
   "scripts": {
     "clean": "rm -rf node-zerox/dist",
@@ -9,6 +9,7 @@
     "postinstall": "node node-zerox/scripts/install-dependencies.js",
     "prepublishOnly": "npm run build",
     "test": "ts-node node-zerox/tests/index.ts",
+    "claude-test": "ts-node node-zerox/tests/claude-test.ts",
     "test:performance": "jest node-zerox/tests/performance.test.ts --runInBand"
   },
   "author": "tylermaran",
@@ -54,7 +55,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/getomni-ai/zerox.git"
+    "url": "git+https://github.com/fazaamal/zerox-claude/tree/claude-support"
   },
   "keywords": [
     "ocr",

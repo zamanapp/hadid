@@ -35,11 +35,12 @@ export interface ZeroxArgs {
   modelProvider?: ModelProvider | string;
   openaiAPIKey?: string;
   outputDir?: string;
-  pagesToConvertAsImages?: number | number[];
+  pagesToProcess?: number | number[];
   prompt?: string;
   schema?: Record<string, unknown>;
   tempDir?: string;
   trimEdges?: boolean;
+  convertSpreadsheetToMarkdown?: boolean;
 }
 
 export interface ZeroxOutput {
@@ -274,6 +275,8 @@ export interface ModelInterface {
     mode: OperationMode,
     params: CompletionArgs | ExtractionArgs
   ): Promise<CompletionResponse | ExtractionResponse>;
+
+  convertHtmlToMarkdown(html: string): Promise<string>;
 }
 
 export interface Summary {

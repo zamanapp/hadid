@@ -25,26 +25,26 @@ Zerox is available as both a Node and Python package.
 - [Node README](#node-zerox) - [npm package](https://www.npmjs.com/package/zerox)
 - [Python README](#python-zerox) - [pip package](https://pypi.org/project/py-zerox/)
 
-| Feature                   | Node.js                      | Python                     |
-| ------------------------- | ---------------------------- | -------------------------- |
-| PDF Processing            | ✓ (requires graphicsmagick)  | ✓ (requires poppler)       |
-| Image Processing          | ✓                            | ✓                          |
-| OpenAI Support            | ✓                            | ✓                          |
-| Azure OpenAI Support      | ✓                            | ✓                          |
-| AWS Bedrock Support       | ✓                            | ✓                          |
-| Google Gemini Support     | ✓                            | ✓                          |
-| Vertex AI Support         | ✗                            | ✓                          |
-| Data Extraction           | ✓ (`schema`)                 | ✗                          |
-| Per-page Extraction       | ✓ (`extractPerPage`)         | ✗                          |
-| Custom System Prompts     | ✗                            | ✓ (`custom_system_prompt`) |
-| Maintain Format Option    | ✓ (`maintainFormat`)         | ✓ (`maintain_format`)      |
-| Async API                 | ✓                            | ✓                          |
-| Error Handling Modes      | ✓ (`errorMode`)              | ✗                          |
-| Concurrent Processing     | ✓ (`concurrency`)            | ✓ (`concurrency`)          |
-| Temp Directory Management | ✓ (`tempDir`)                | ✓ (`temp_dir`)             |
-| Page Selection            | ✓ (`pagesToConvertAsImages`) | ✓ (`select_pages`)         |
-| Orientation Correction    | ✓ (`correctOrientation`)     | ✗                          |
-| Edge Trimming             | ✓ (`trimEdges`)              | ✗                          |
+| Feature                   | Node.js                     | Python                     |
+| ------------------------- | --------------------------- | -------------------------- |
+| PDF Processing            | ✓ (requires graphicsmagick) | ✓ (requires poppler)       |
+| Image Processing          | ✓                           | ✓                          |
+| OpenAI Support            | ✓                           | ✓                          |
+| Azure OpenAI Support      | ✓                           | ✓                          |
+| AWS Bedrock Support       | ✓                           | ✓                          |
+| Google Gemini Support     | ✓                           | ✓                          |
+| Vertex AI Support         | ✗                           | ✓                          |
+| Data Extraction           | ✓ (`schema`)                | ✗                          |
+| Per-page Extraction       | ✓ (`extractPerPage`)        | ✗                          |
+| Custom System Prompts     | ✗                           | ✓ (`custom_system_prompt`) |
+| Maintain Format Option    | ✓ (`maintainFormat`)        | ✓ (`maintain_format`)      |
+| Async API                 | ✓                           | ✓                          |
+| Error Handling Modes      | ✓ (`errorMode`)             | ✗                          |
+| Concurrent Processing     | ✓ (`concurrency`)           | ✓ (`concurrency`)          |
+| Temp Directory Management | ✓ (`tempDir`)               | ✓ (`temp_dir`)             |
+| Page Selection            | ✓ (`pagesToProcess`)        | ✓ (`select_pages`)         |
+| Orientation Correction    | ✓ (`correctOrientation`)    | ✗                          |
+| Edge Trimming             | ✓ (`trimEdges`)             | ✗                          |
 
 ## Node Zerox
 
@@ -124,11 +124,12 @@ const result = await zerox({
   model: ModelOptions.OPENAI_GPT_4O, // Model to use (supports various models from different providers)
   modelProvider: ModelProvider.OPENAI, // Choose from OPENAI, BEDROCK, GOOGLE, or AZURE
   outputDir: undefined, // Save combined result.md to a file
-  pagesToConvertAsImages: -1, // Page numbers to convert to image as array (e.g. `[1, 2, 3]`) or a number (e.g. `1`). Set to -1 to convert all pages
+  pagesToProcess: -1, // Page numbers to convert to image as array (e.g. `[1, 2, 3]`) or a number (e.g. `1`). Set to -1 to convert all pages
   prompt: "", // LLM instructions for processing the document
   schema: undefined, // Schema for structured data extraction
   tempDir: "/os/tmp", // Directory to use for temporary files (default: system temp directory)
   trimEdges: true, // True by default, trims pixels from all edges that contain values similar to the given background color, which defaults to that of the top-left pixel
+  convertSpreadsheetToMarkdown = true, // True by default, converts the spreadsheet to markdown ATX format from HTML, if False then keeps it in HTML format
 });
 ```
 

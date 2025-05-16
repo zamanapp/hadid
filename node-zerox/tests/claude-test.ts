@@ -1,5 +1,6 @@
 import { ModelOptions, ModelProvider } from "../src/types";
 import { zerox } from "../src";
+import Anthropic from "@anthropic-ai/sdk";
 
 async function main() {
   const prompt = `You are a specialized document parser that converts documents into structured formats. Your task is to analyze the provided document and return a clean, well-formatted JSON object containing both markdown representation and relevant tags.
@@ -71,15 +72,31 @@ Processing Instructions:
 
 Do not include any text outside the JSON structure. Your entire response should be valid, parseable JSON.`;
 
+  console.log(process.env.CLAUDE_API_KEY as string);
+
   const result = await zerox({
-    filePath: "/Users/fazasophian/Projects/zerox-claude/shared/inputs/0003.pdf",
+    filePath: "file path to the document you want to convert",
     credentials: {
       apiKey: process.env.CLAUDE_API_KEY as string,
     },
     model: ModelOptions.ANTHROPIC_CLAUDE_3_5_HAIKU,
     modelProvider: ModelProvider.CLAUDE,
-    pagesToConvertAsImages: Array.from({ length: 3 }, (_, i) => i + 1),
-    prompt,
+    pagesToProcess: Array.from({ length: 3 }, (_, i) => i + 1),
+    // prompt: "Convert the document to markdown ATX style",
+    schema: {
+      tags: `Extract relevant tags from documents to improve searchability and categorisation.
+
+Given the following text, extract up to 15 of the most relevant tags. Tags should include important keywords and named entities such as people, organisations, locations, events, and topics. Tags should make the document easier to find via search.
+
+Guidelines:
+	•	Return at most 15 tags
+	•	Preserve casing and spacing for proper nouns (e.g. “United Nations”, “John Smith”)
+	•	Remove duplicates
+	•	Tags should be relevant, specific, and search-friendly
+
+Output format (stringified JSON array):
+["tag1", "tag2", "tag3", "..."]`,
+    },
   });
 
   console.log(result);

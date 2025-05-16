@@ -34,6 +34,35 @@ export default class OpenAIModel implements ModelInterface {
     this.llmParams = llmParams;
   }
 
+  async convertHtmlToMarkdown(html: string): Promise<string> {
+    try {
+      const response = await axios.post(
+        "https://api.openai.com/v1/chat/completions",
+        {
+          model: this.model,
+          messages: [
+            {
+              role: "user",
+              content: `Convert the following HTML to Markdown:\n\n${html}`,
+            },
+          ],
+          ...convertKeysToSnakeCase(this.llmParams ?? null),
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.apiKey}`,
+          },
+        }
+      );
+
+      return response.data.choices[0].message.content || "";
+    } catch (err) {
+      console.error("Error in OpenAI HTML to Markdown conversion", err);
+      throw err;
+    }
+  }
+
   async getCompletion(
     mode: OperationMode,
     params: CompletionArgs | ExtractionArgs

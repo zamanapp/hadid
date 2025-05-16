@@ -37,6 +37,26 @@ export default class AzureModel implements ModelInterface {
     this.llmParams = llmParams;
   }
 
+  async convertHtmlToMarkdown(html: string): Promise<string> {
+    try {
+      const response = await this.client.chat.completions.create({
+        messages: [
+          {
+            role: "user",
+            content: `Convert the following HTML to Markdown:\n\n${html}`,
+          },
+        ],
+        model: "",
+        ...convertKeysToSnakeCase(this.llmParams ?? null),
+      });
+
+      return response.choices[0].message.content || "";
+    } catch (err) {
+      console.error("Error in Azure HTML to Markdown conversion", err);
+      throw err;
+    }
+  }
+
   async getCompletion(
     mode: OperationMode,
     params: CompletionArgs | ExtractionArgs
