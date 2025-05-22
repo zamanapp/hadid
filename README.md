@@ -1,6 +1,6 @@
 ![Hero Image](./assets/heroImage.png)
 
-## Zerox OCR
+## Hadid OCR
 
 <a href="https://discord.gg/smg2QfwtJ6">
   <img src="https://github.com/user-attachments/assets/cccc0e9a-e3b2-425e-9b54-e5024681b129" alt="Join us on Discord" width="200px">
@@ -16,14 +16,14 @@ The general logic:
 - Aggregate the responses and return Markdown
 
 Try out the hosted version here: <https://getomni.ai/ocr-demo>
-Or visit our full documentation at: <https://docs.getomni.ai/zerox>
+Or visit our full documentation at: <https://docs.getomni.ai/hadid>
 
 ## Getting Started
 
-Zerox is available as both a Node and Python package.
+Hadid is available as both a Node and Python package.
 
-- [Node README](#node-zerox) - [npm package](https://www.npmjs.com/package/zerox)
-- [Python README](#python-zerox) - [pip package](https://pypi.org/project/py-zerox/)
+- [Node README](#node-hadid) - [npm package](https://www.npmjs.com/package/hadid)
+- [Python README](#python-hadid) - [pip package](https://pypi.org/project/py-hadid/)
 
 | Feature                   | Node.js                     | Python                     |
 | ------------------------- | --------------------------- | -------------------------- |
@@ -46,17 +46,17 @@ Zerox is available as both a Node and Python package.
 | Orientation Correction    | ✓ (`correctOrientation`)    | ✗                          |
 | Edge Trimming             | ✓ (`trimEdges`)             | ✗                          |
 
-## Node Zerox
+## Node Hadid
 
 (Node.js SDK - supports vision models from different providers like OpenAI, Azure OpenAI, Anthropic, AWS Bedrock, Google Gemini, etc.)
 
 ### Installation
 
 ```sh
-npm install zerox
+npm install hadid
 ```
 
-Zerox uses `graphicsmagick` and `ghostscript` for the PDF => image processing step. These should be pulled automatically, but you may need to manually install.
+Hadid uses `graphicsmagick` and `ghostscript` for the PDF => image processing step. These should be pulled automatically, but you may need to manually install.
 
 On linux use:
 
@@ -70,9 +70,9 @@ sudo apt-get install -y graphicsmagick
 **With file URL**
 
 ```ts
-import { zerox } from "zerox";
+import { hadid } from "hadid";
 
-const result = await zerox({
+const result = await hadid({
   filePath: "https://omni-demo-data.s3.amazonaws.com/test/cs101.pdf",
   credentials: {
     apiKey: process.env.OPENAI_API_KEY,
@@ -83,10 +83,10 @@ const result = await zerox({
 **From local path**
 
 ```ts
-import { zerox } from "zerox";
+import { hadid } from "hadid";
 import path from "path";
 
-const result = await zerox({
+const result = await hadid({
   filePath: path.resolve(__dirname, "./cs101.pdf"),
   credentials: {
     apiKey: process.env.OPENAI_API_KEY,
@@ -97,7 +97,7 @@ const result = await zerox({
 ### Parameters
 
 ```ts
-const result = await zerox({
+const result = await hadid({
   // Required
   filePath: "path/to/file",
   credentials: {
@@ -120,7 +120,7 @@ const result = await zerox({
   maintainFormat: false, // Slower but helps maintain consistent formatting
   maxImageSize: 15, // Maximum size of images to compress, defaults to 15MB
   maxRetries: 1, // Number of retries to attempt on a failed page, defaults to 1
-  maxTesseractWorkers: -1, // Maximum number of Tesseract workers. Zerox will start with a lower number and only reach maxTesseractWorkers if needed
+  maxTesseractWorkers: -1, // Maximum number of Tesseract workers. Hadid will start with a lower number and only reach maxTesseractWorkers if needed
   model: ModelOptions.OPENAI_GPT_4O, // Model to use (supports various models from different providers)
   modelProvider: ModelProvider.OPENAI, // Choose from OPENAI, BEDROCK, GOOGLE, or AZURE
   outputDir: undefined, // Save combined result.md to a file
@@ -196,7 +196,7 @@ Request #3 => page_2_markdown + page_3_image
 
 ### Data Extraction
 
-Zerox supports structured data extraction from documents using a schema. This allows you to pull specific information from documents in a structured format instead of getting the full markdown conversion.
+Hadid supports structured data extraction from documents using a schema. This allows you to pull specific information from documents in a structured format instead of getting the full markdown conversion.
 
 Set `extractOnly: true` and provide a `schema` to extract structured data. The schema follows the [JSON Schema standard](https://json-schema.org/understanding-json-schema/).
 
@@ -206,7 +206,7 @@ You can also set `extractionModel`, `extractionModelProvider`, and `extractionCr
 
 ### Supported Models
 
-Zerox supports a wide range of models across different providers:
+Hadid supports a wide range of models across different providers:
 
 - **Azure OpenAI**
 
@@ -233,11 +233,11 @@ Zerox supports a wide range of models across different providers:
   - Gemini 2.0 (Flash, Flash-Lite)
 
 ```ts
-import { zerox } from "zerox";
-import { ModelOptions, ModelProvider } from "zerox/node-zerox/dist/types";
+import { hadid } from "hadid";
+import { ModelOptions, ModelProvider } from "hadid/node-hadid/dist/types";
 
 // OpenAI
-const openaiResult = await zerox({
+const openaiResult = await hadid({
   filePath: "path/to/file.pdf",
   modelProvider: ModelProvider.OPENAI,
   model: ModelOptions.OPENAI_GPT_4O,
@@ -247,7 +247,7 @@ const openaiResult = await zerox({
 });
 
 // Azure OpenAI
-const azureResult = await zerox({
+const azureResult = await hadid({
   filePath: "path/to/file.pdf",
   modelProvider: ModelProvider.AZURE,
   model: ModelOptions.OPENAI_GPT_4O,
@@ -258,7 +258,7 @@ const azureResult = await zerox({
 });
 
 // AWS Bedrock
-const bedrockResult = await zerox({
+const bedrockResult = await hadid({
   filePath: "path/to/file.pdf",
   modelProvider: ModelProvider.BEDROCK,
   model: ModelOptions.BEDROCK_CLAUDE_3_SONNET_2024_10,
@@ -270,7 +270,7 @@ const bedrockResult = await zerox({
 });
 
 // Google Gemini
-const geminiResult = await zerox({
+const geminiResult = await hadid({
   filePath: "path/to/file.pdf",
   modelProvider: ModelProvider.GOOGLE,
   model: ModelOptions.GOOGLE_GEMINI_1_5_PRO,
@@ -280,27 +280,27 @@ const geminiResult = await zerox({
 });
 ```
 
-## Python Zerox
+## Python Hadid
 
 (Python SDK - supports vision models from different providers like OpenAI, Azure OpenAI, Anthropic, AWS Bedrock, etc.)
 
 ### Installation
 
 - Install **poppler** on the system, it should be available in path variable. See the [pdf2image documentation](https://pdf2image.readthedocs.io/en/latest/installation.html) for instructions by platform.
-- Install py-zerox:
+- Install py-hadid:
 
 ```sh
-pip install py-zerox
+pip install py-hadid
 ```
 
-The `pyzerox.zerox` function is an asynchronous API that performs OCR (Optical Character Recognition) to markdown using vision models. It processes PDF files and converts them into markdown format. Make sure to set up the environment variables for the model and the model provider before using this API.
+The `pyhadid.hadid` function is an asynchronous API that performs OCR (Optical Character Recognition) to markdown using vision models. It processes PDF files and converts them into markdown format. Make sure to set up the environment variables for the model and the model provider before using this API.
 
 Refer to the [LiteLLM Documentation](https://docs.litellm.ai/docs/providers) for setting up the environment and passing the correct model name.
 
 ### Usage
 
 ```python
-from pyzerox import zerox
+from pyhadid import hadid
 import os
 import json
 import asyncio
@@ -367,7 +367,7 @@ async def main():
     select_pages = None ## None for all, but could be int or list(int) page numbers (1 indexed)
 
     output_dir = "./output_test" ## directory to save the consolidated markdown file
-    result = await zerox(file_path=file_path, model=model, output_dir=output_dir,
+    result = await hadid(file_path=file_path, model=model, output_dir=output_dir,
                         custom_system_prompt=custom_system_prompt,select_pages=select_pages, **kwargs)
     return result
 
@@ -382,7 +382,7 @@ print(result)
 ### Parameters
 
 ```python
-async def zerox(
+async def hadid(
     cleanup: bool = True,
     concurrency: int = 10,
     file_path: Optional[str] = "",
@@ -393,7 +393,7 @@ async def zerox(
     custom_system_prompt: Optional[str] = None,
     select_pages: Optional[Union[int, Iterable[int]]] = None,
     **kwargs
-) -> ZeroxOutput:
+) -> HadidOutput:
   ...
 ```
 
@@ -413,9 +413,9 @@ Parameters
 - **output_dir** (Optional[str], optional):
   The directory to save the markdown output. Defaults to None.
 - **temp_dir** (str, optional):
-  The directory to store temporary files, defaults to some named folder in system's temp directory. If already exists, the contents will be deleted before Zerox uses it.
+  The directory to store temporary files, defaults to some named folder in system's temp directory. If already exists, the contents will be deleted before Hadid uses it.
 - **custom_system_prompt** (str, optional):
-  The system prompt to use for the model, this overrides the default system prompt of Zerox.Generally it is not required unless you want some specific behavior. Defaults to None.
+  The system prompt to use for the model, this overrides the default system prompt of Hadid.Generally it is not required unless you want some specific behavior. Defaults to None.
 - **select_pages** (Optional[Union[int, Iterable[int]]], optional):
   Pages to process, can be a single page number or an iterable of page numbers. Defaults to None
 - **kwargs** (dict, optional):
@@ -424,7 +424,7 @@ Parameters
 
 Returns
 
-- ZeroxOutput:
+- HadidOutput:
   Contains the markdown content generated by the model and also some metadata (refer below).
 
 ### Example Output (output from "azure/gpt-4o-mini")
@@ -432,7 +432,7 @@ Returns
 Note the output is manually wrapped for this documentation for better readability.
 
 ````Python
-ZeroxOutput(
+HadidOutput(
     completion_time=9432.975,
     file_name='cs101',
     input_tokens=36877,

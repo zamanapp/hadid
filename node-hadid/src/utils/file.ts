@@ -205,7 +205,7 @@ export const convertPdfToImages = async ({
 export const convertExcelToHtml = async (
   filePath: string
 ): Promise<ExcelSheetContent[]> => {
-  const tableClass = "zerox-excel-table";
+  const tableClass = "hadid-excel-table";
 
   try {
     if (!(await fs.pathExists(filePath))) {

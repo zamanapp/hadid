@@ -38,12 +38,12 @@ import {
   OperationMode,
   Page,
   PageStatus,
-  ZeroxArgs,
-  ZeroxOutput,
+  HadidArgs,
+  HadidOutput,
 } from "./types";
 import { NUM_STARTING_WORKERS } from "./constants";
 
-export const zerox = async ({
+export const hadid = async ({
   cleanup = true,
   concurrency = 10,
   correctOrientation = true,
@@ -77,7 +77,7 @@ export const zerox = async ({
   tempDir = os.tmpdir(),
   trimEdges = true,
   convertSpreadsheetToMarkdown = true,
-}: ZeroxArgs): Promise<ZeroxOutput> => {
+}: HadidArgs): Promise<HadidOutput> => {
   let extracted: Record<string, unknown> | null = null;
   let extractedLogprobs: LogprobPage[] = [];
   let inputTokenCount: number = 0;
@@ -143,7 +143,7 @@ export const zerox = async ({
     const rand = Math.floor(1000 + Math.random() * 9000).toString();
     const tempDirectory = path.join(
       tempDir || os.tmpdir(),
-      `zerox-temp-${rand}`
+      `hadid-temp-${rand}`
     );
     const sourceDirectory = path.join(tempDirectory, "source");
     await fs.ensureDir(sourceDirectory);

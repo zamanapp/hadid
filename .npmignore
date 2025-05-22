@@ -1,7 +1,7 @@
 # Folders
-node-zerox/src/
-node-zerox/tests/
-py_zerox/
+node-hadid/src/
+node-hadid/tests/
+py_hadid/
 assets/
 shared/
 
@@ -23,4 +23,4 @@ eng.traineddata
 
 # Keep type declarations
 !.gitignore
-!node-zerox/dist/**/*.d.ts
+!node-hadid/dist/**/*.d.ts

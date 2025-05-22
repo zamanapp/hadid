@@ -1,7 +1,7 @@
 import { ChatCompletionTokenLogprob } from "openai/resources";
 import Tesseract from "tesseract.js";
 
-export interface ZeroxArgs {
+export interface HadidArgs {
   cleanup?: boolean;
   concurrency?: number;
   correctOrientation?: boolean;
@@ -43,7 +43,7 @@ export interface ZeroxArgs {
   convertSpreadsheetToMarkdown?: boolean;
 }
 
-export interface ZeroxOutput {
+export interface HadidOutput {
   completionTime: number;
   extracted: Record<string, unknown> | null;
   fileName: string;

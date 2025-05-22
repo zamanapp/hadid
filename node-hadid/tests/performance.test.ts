@@ -1,6 +1,6 @@
 import path from "path";
 import fs from "fs-extra";
-import { zerox } from "../src";
+import { hadid } from "../src";
 import { ModelOptions } from "../src/types";
 
 const MOCK_OPENAI_TIME = 0;
@@ -35,7 +35,7 @@ jest.mock("../src/models/openAI", () => {
   };
 });
 
-describe("Zerox Performance Tests", () => {
+describe("Hadid Performance Tests", () => {
   const allResults: TestResult[] = [];
 
   beforeAll(async () => {
@@ -51,7 +51,7 @@ describe("Zerox Performance Tests", () => {
 
     const startTime = Date.now();
 
-    const result = await zerox({
+    const result = await hadid({
       cleanup: true,
       concurrency,
       filePath,

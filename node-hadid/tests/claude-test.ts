@@ -1,5 +1,5 @@
 import { ModelOptions, ModelProvider } from "../src/types";
-import { zerox } from "../src";
+import { hadid } from "../src";
 import Anthropic from "@anthropic-ai/sdk";
 
 async function main() {
@@ -72,7 +72,7 @@ Processing Instructions:
 
 Do not include any text outside the JSON structure. Your entire response should be valid, parseable JSON.`;
 
-  const result = await zerox({
+  const result = await hadid({
     filePath:
       "/Users/fazasophian/Downloads/Packing List.Next Day Delivery_2 (11).xlsx", // Replace with the path to your PDF file
     credentials: {

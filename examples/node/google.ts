@@ -1,8 +1,8 @@
-import { ModelOptions, ModelProvider } from "zerox/node-zerox/dist/types";
-import { zerox } from "zerox";
+import { ModelOptions, ModelProvider } from "hadid/node-hadid/dist/types";
+import { hadid } from "hadid";
 
 /**
- * Example using Google Gemini with Zerox to extract structured data from documents.
+ * Example using Google Gemini with Hadid to extract structured data from documents.
  * This shows extraction setup with schema definition for a property report document.
  */
 async function main() {
@@ -35,7 +35,7 @@ async function main() {
   };
 
   try {
-    const result = await zerox({
+    const result = await hadid({
       credentials: {
         apiKey: process.env.GEMINI_API_KEY || "",
       },
