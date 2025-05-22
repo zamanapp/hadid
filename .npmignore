@@ -17,6 +17,8 @@ setup.py
 Makefile
 eng.traineddata
 .env
+.envrc
+.env*
 
 # File types
 *.ts

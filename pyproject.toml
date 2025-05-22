@@ -6,8 +6,8 @@ authors = ["wizenheimer","pradhyumna85"]
 license = "MIT"
 readme = "README.md"
 packages = [{ include = "pyhadid", from = "py_hadid" }]
-repository = "https://github.com/getomni-ai/hadid.git"
-documentation = "https://github.com/getomni-ai/hadid"
+repository = "https://github.com/fazaamal/hadid.git"
+documentation = "https://github.com/fazaamal/hadid"
 keywords = ["ocr", "document", "llm"]
 package-mode = false
 
