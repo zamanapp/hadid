@@ -3,85 +3,61 @@ import { hadid } from "../src";
 import Anthropic from "@anthropic-ai/sdk";
 
 async function main() {
-  const prompt = `You are a specialized document parser that converts documents into structured formats. Your task is to analyze the provided document and return a clean, well-formatted JSON object containing both markdown representation and relevant tags.
-Output Format
-Your response must strictly adhere to this JSON structure:
-{
-  "markdown": "# Document Title\n\n## Section\n\nContent...",
-  "tags": ["relevant-tag-1", "relevant-tag-2", "document-type"]
-}
+  const prompt = `You are a document conversion specialist. Your sole function is to convert documents to markdown format with perfect accuracy and completeness.
 
-Markdown Conversion Guidelines
-Convert the entire document into clean, semantic ATX-style Markdown
-Use proper heading hierarchy:
+Core Instructions
 
-# for the main title
-## for major sections
-### (or deeper) for subsections as appropriate
+- Convert any provided document to clean, properly formatted markdown
+- Return ONLY the markdown content with no explanatory text, comments, or meta-commentary
+- Never use code block delimiters like '''markdown or '''
+- Output should be ready-to-use markdown that can be directly saved to a .md file
 
+Conversion Standards
 
-Preserve the original document's visual structure and information hierarchy
-Format elements consistently:
+Content Fidelity
 
-Use bullet points (* or -) for lists
-Apply bold formatting for field labels (e.g., **Name:**)
-Use backticks for IDs, tracking numbers, and code
-For tables, use standard Markdown table syntax
+- Include ALL content from the source document without exception
+- Preserve headers, footers, captions, annotations, and any subtext
+- Maintain the document's logical structure and information hierarchy
+- Do not summarize, paraphrase, or omit any information
 
+Visual Element Handling
 
-When images, QR codes, or barcodes appear, insert appropriate placeholders:
+- Charts/Infographics: Convert data to markdown tables when applicable, otherwise provide structured text representation
+- Images with text: Extract and include all visible text content
+- Images without text: Replace with [Description of image](image.png) format
+- Company/Brand logos: Wrap in square brackets like [Coca-Cola] or [Microsoft]
 
-*(QR code present)*
-*(Barcode present)*
-*(Logo present)*
-*(Image present: brief description if obvious)*
+Table Processing
 
+- For tables with double headers (row and column headers), add a new column to properly structure the data
+- Maintain all data relationships and preserve table meaning
+- Use proper markdown table syntax with aligned pipes
 
-Preserve formatting for addresses, contact information, and other structured data
-Do not omit any textual content from the original document
-Do not add interpretation, commentary, or metadata not present in the original
+Interactive Elements
 
-Tag Generation Requirements
-Generate an array of up to 15 relevant tags based on the document content, following these rules:
-Use lowercase letters only
-Connect multi-word concepts with hyphens (e.g., shipping-label not shipping label)
-Eliminate duplicates and near-duplicates
-Return only the tags array, with no explanations
-If insufficient context exists for meaningful tagging, return an empty array ([])
+- Checkboxes: Use ☐ for unchecked, ☑ for checked
+- Form fields: Represent with appropriate markdown structures
+- Buttons/Links: Convert to standard markdown link format when applicable
 
-Tag Categories to Consider:
+Formatting Preservation
 
--Document type: invoice, receipt, shipping-label, purchase-order, contract, etc.
--Organizations: company names, government agencies, institutions
--People: roles or specific individuals if prominently mentioned
--Locations: countries, cities, regions relevant to the document
--Products/Services: categories or specific items mentioned
--Industries: sectors relevant to the document content
--Time periods: if the document relates to specific timeframes
--Status indicators: draft, final, approved, pending, etc.
--Process types: procurement, shipping, payment, application, etc.
-
-Processing Instructions:
-
-1.First, carefully analyze the entire document
-2.Identify the document type, key entities, and primary purpose
-3.Convert to clean markdown following the guidelines above
-4.Generate appropriate tags based on content analysis
-5.Format the final output as a valid JSON object with both "markdown" and "tags" fields
-6.Ensure the JSON is properly escaped and formatted
-
-Do not include any text outside the JSON structure. Your entire response should be valid, parseable JSON.`;
+- Use correct markdown syntax for all text styling (headers, bold, italic, lists)
+- Maintain paragraph structure and meaningful whitespace
+- Preserve nested list hierarchies
+- Apply appropriate heading levels (# ## ### etc.) based on document structure
+`;
 
   const result = await hadid({
-    filePath:
-      "/Users/fazasophian/Downloads/Packing List.Next Day Delivery_2 (11).xlsx", // Replace with the path to your PDF file
+    filePath: "shared/inputs/0002.pdf", // Replace with the path to your PDF file
+    // "shared/inputs/spreadsheet_test.xls", // Replace with the path to your XLS file
     credentials: {
       apiKey: process.env.CLAUDE_API_KEY as string,
     },
     model: ModelOptions.ANTHROPIC_CLAUDE_3_5_HAIKU,
     modelProvider: ModelProvider.CLAUDE,
     pagesToProcess: Array.from({ length: 3 }, (_, i) => i + 1),
-    prompt: "Convert the document to markdown",
+    prompt,
     schema: {
       tags: `Extract relevant tags from documents to improve searchability and categorisation.
 
@@ -96,7 +72,7 @@ Do not include any text outside the JSON structure. Your entire response should 
     Output format (stringified JSON array):
     ["tag1", "tag2", "tag3", "..."]`,
     },
-    convertSpreadsheetToMarkdown: false,
+    convertSpreadsheetToMarkdown: true,
   });
 
   console.log(result);
