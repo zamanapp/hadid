@@ -125,11 +125,11 @@ const result = await zerox({
   modelProvider: ModelProvider.OPENAI, // Choose from OPENAI, BEDROCK, GOOGLE, or AZURE
   outputDir: undefined, // Save combined result.md to a file
   pagesToProcess: -1, // Page numbers to convert to image as array (e.g. `[1, 2, 3]`) or a number (e.g. `1`). Set to -1 to convert all pages
-  prompt: "", // LLM instructions for processing the document
+  prompt: "", // LLM instructions for processing the document only for non spreadsheet documents
   schema: undefined, // Schema for structured data extraction
   tempDir: "/os/tmp", // Directory to use for temporary files (default: system temp directory)
   trimEdges: true, // True by default, trims pixels from all edges that contain values similar to the given background color, which defaults to that of the top-left pixel
-  convertSpreadsheetToMarkdown = true, // True by default, converts the spreadsheet to markdown ATX format from HTML, if False then keeps it in HTML format
+  convertSpreadsheetToMarkdown = true, // True by default, converts the spreadsheet to markdown format from HTML, if False then keeps it in HTML format. This is done using on device parsing, no LLM involved.
 });
 ```
 

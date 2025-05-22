@@ -57,34 +57,6 @@ export default class ClaudeModel implements ModelInterface {
     return await handler();
   }
 
-  async convertHtmlToMarkdown(html: string): Promise<string> {
-    const systemPrompt =
-      "You are an assistant that converts HTML content into ATX-style Markdown. Ensure the output is valid Markdown and adheres to the ATX style.";
-
-    const messages: any[] = [
-      {
-        role: "user",
-        content: html,
-      },
-    ];
-
-    try {
-      const response = await this.client.messages.create({
-        model: this.model,
-        max_tokens: this.llmParams?.maxTokens || 2048,
-        system: systemPrompt,
-        messages,
-      });
-
-      const data = response;
-
-      return data.content[0].type === "text" ? data.content[0].text : "";
-    } catch (err) {
-      console.error("Error in HTML to Markdown conversion", err);
-      throw err;
-    }
-  }
-
   private async createMessageContent({
     input,
     options,

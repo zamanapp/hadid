@@ -72,31 +72,31 @@ Processing Instructions:
 
 Do not include any text outside the JSON structure. Your entire response should be valid, parseable JSON.`;
 
-  console.log(process.env.CLAUDE_API_KEY as string);
-
   const result = await zerox({
-    filePath: "file path to the document you want to convert",
+    filePath:
+      "/Users/fazasophian/Downloads/Packing List.Next Day Delivery_2 (11).xlsx", // Replace with the path to your PDF file
     credentials: {
       apiKey: process.env.CLAUDE_API_KEY as string,
     },
     model: ModelOptions.ANTHROPIC_CLAUDE_3_5_HAIKU,
     modelProvider: ModelProvider.CLAUDE,
     pagesToProcess: Array.from({ length: 3 }, (_, i) => i + 1),
-    // prompt: "Convert the document to markdown ATX style",
+    prompt: "Convert the document to markdown",
     schema: {
       tags: `Extract relevant tags from documents to improve searchability and categorisation.
 
-Given the following text, extract up to 15 of the most relevant tags. Tags should include important keywords and named entities such as people, organisations, locations, events, and topics. Tags should make the document easier to find via search.
+    Given the following text, extract up to 15 of the most relevant tags. Tags should include important keywords and named entities such as people, organisations, locations, events, and topics. Tags should make the document easier to find via search.
 
-Guidelines:
-	•	Return at most 15 tags
-	•	Preserve casing and spacing for proper nouns (e.g. “United Nations”, “John Smith”)
-	•	Remove duplicates
-	•	Tags should be relevant, specific, and search-friendly
+    Guidelines:
+    	•	Return at most 15 tags
+    	•	Preserve casing and spacing for proper nouns (e.g. “United Nations”, “John Smith”)
+    	•	Remove duplicates
+    	•	Tags should be relevant, specific, and search-friendly
 
-Output format (stringified JSON array):
-["tag1", "tag2", "tag3", "..."]`,
+    Output format (stringified JSON array):
+    ["tag1", "tag2", "tag3", "..."]`,
     },
+    convertSpreadsheetToMarkdown: false,
   });
 
   console.log(result);

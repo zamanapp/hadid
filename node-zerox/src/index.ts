@@ -174,7 +174,6 @@ export const zerox = async ({
 
       pages = await extractPagesFromStructuredDataFile(
         localPath,
-        modelInstance,
         convertSpreadsheetToMarkdown,
         pagesToProcess
       );

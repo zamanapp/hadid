@@ -214,7 +214,7 @@ export const convertExcelToHtml = async (
 
     const workbook = xlsx.readFile(filePath, {
       type: "file",
-      cellStyles: true,
+      cellStyles: false,
       cellHTML: true,
     });
 
@@ -302,15 +302,111 @@ const convertPdfWithPoppler = async (
     .map((result) => path.join(savePath, result));
 };
 
+/**
+ * Converts an Excel file to Markdown format
+ * @param filePath Path to the Excel file
+ * @returns Array of objects containing sheet name and markdown content
+ */
+export const convertExcelToMarkdown = async (
+  filePath: string
+): Promise<ExcelSheetContent[]> => {
+  try {
+    if (!(await fs.pathExists(filePath))) {
+      throw new Error(`Excel file not found: ${filePath}`);
+    }
+
+    const workbook = xlsx.readFile(filePath, {
+      type: "file",
+    });
+
+    if (!workbook || !workbook.SheetNames || workbook.SheetNames.length === 0) {
+      throw new Error("Invalid Excel file or no sheets found");
+    }
+
+    const sheets: ExcelSheetContent[] = [];
+
+    for (const sheetName of workbook.SheetNames) {
+      const worksheet = workbook.Sheets[sheetName];
+
+      const jsonData = xlsx.utils.sheet_to_json<any[]>(worksheet, {
+        header: 1,
+      });
+
+      let markdownContent = `## Sheet: ${sheetName}\n\n`;
+
+      if (jsonData.length > 0) {
+        // Create header row if data exists
+        if (jsonData[0] && jsonData[0].length > 0) {
+          // Add header row
+          markdownContent += "| ";
+          jsonData[0].forEach((cell) => {
+            const cellContent =
+              cell !== null && cell !== undefined ? cell.toString() : "";
+            markdownContent += `${cellContent} | `;
+          });
+          markdownContent += "\n";
+
+          // Add separator row
+          markdownContent += "| ";
+          jsonData[0].forEach(() => {
+            markdownContent += "--- | ";
+          });
+          markdownContent += "\n";
+
+          // Add data rows
+          for (let i = 1; i < jsonData.length; i++) {
+            if (jsonData[i] && jsonData[i].length > 0) {
+              markdownContent += "| ";
+
+              // Ensure we have the same number of cells as the header
+              const row = jsonData[i];
+              const headerLength = jsonData[0].length;
+
+              for (let j = 0; j < headerLength; j++) {
+                const cell = j < row.length ? row[j] : "";
+                const cellContent =
+                  cell !== null && cell !== undefined ? cell.toString() : "";
+                markdownContent += `${cellContent} | `;
+              }
+
+              markdownContent += "\n";
+            }
+          }
+        } else {
+          markdownContent += "No data in this sheet.\n";
+        }
+      } else {
+        markdownContent += "Empty sheet.\n";
+      }
+
+      sheets.push({
+        sheetName,
+        content: markdownContent,
+        contentLength: markdownContent.length,
+      });
+    }
+
+    return sheets;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Extracts pages from a structured data file (like Excel)
 export const extractPagesFromStructuredDataFile = async (
   filePath: string,
-  modelInstance: ModelInterface,
   convertSpreadsheetToMarkdown: boolean,
   pagesToProcess: number | number[]
 ): Promise<Page[]> => {
   if (isExcelFile(filePath)) {
-    const allSheets = await convertExcelToHtml(filePath);
+    let allSheets;
+
+    if (convertSpreadsheetToMarkdown) {
+      allSheets = await convertExcelToMarkdown(filePath);
+    } else {
+      allSheets = await convertExcelToHtml(filePath);
+    }
+
     const sheets =
       pagesToProcess === -1
         ? allSheets
@@ -319,27 +415,15 @@ export const extractPagesFromStructuredDataFile = async (
         : allSheets.slice(0, pagesToProcess);
 
     const pages: Page[] = [];
-    if (convertSpreadsheetToMarkdown) {
-      await Promise.all(
-        sheets.map(async (sheet: ExcelSheetContent, index: number) => {
-          pages[index] = {
-            content: await modelInstance.convertHtmlToMarkdown(sheet.content),
-            contentLength: sheet.contentLength,
-            page: index + 1,
-            status: PageStatus.SUCCESS,
-          };
-        })
-      );
-    } else {
-      sheets.forEach((sheet: ExcelSheetContent, index: number) => {
-        pages.push({
-          content: sheet.content,
-          contentLength: sheet.contentLength,
-          page: index + 1,
-          status: PageStatus.SUCCESS,
-        });
+
+    sheets.forEach((sheet: ExcelSheetContent, index: number) => {
+      pages.push({
+        content: sheet.content,
+        contentLength: sheet.contentLength,
+        page: index + 1,
+        status: PageStatus.SUCCESS,
       });
-    }
+    });
 
     return pages;
   }

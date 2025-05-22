@@ -275,8 +275,6 @@ export interface ModelInterface {
     mode: OperationMode,
     params: CompletionArgs | ExtractionArgs
   ): Promise<CompletionResponse | ExtractionResponse>;
-
-  convertHtmlToMarkdown(html: string): Promise<string>;
 }
 
 export interface Summary {

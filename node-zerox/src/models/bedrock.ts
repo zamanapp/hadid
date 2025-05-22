@@ -46,25 +46,6 @@ export default class BedrockModel implements ModelInterface {
     this.llmParams = llmParams;
   }
 
-  async convertHtmlToMarkdown(html: string): Promise<string> {
-    try {
-      const response = await this.client.send(
-        new InvokeModelCommand({
-          modelId: this.model,
-          contentType: "text/html",
-          accept: "text/markdown",
-          body: html,
-          ...convertKeysToSnakeCase(this.llmParams ?? null),
-        })
-      );
-
-      return response.body?.toString() || "";
-    } catch (err) {
-      console.error("Error in Bedrock HTML to Markdown conversion", err);
-      throw err;
-    }
-  }
-
   async getCompletion(
     mode: OperationMode,
     params: CompletionArgs | ExtractionArgs

@@ -33,24 +33,6 @@ export default class GoogleModel implements ModelInterface {
     this.llmParams = llmParams;
   }
 
-  async convertHtmlToMarkdown(html: string): Promise<string> {
-    try {
-      const response = await this.client.models.generateContent({
-        config: {
-          ...convertKeysToSnakeCase(this.llmParams ?? null),
-          responseMimeType: "text/markdown",
-        },
-        contents: [{ text: html }],
-        model: this.model,
-      });
-
-      return response.text || "";
-    } catch (err) {
-      console.error("Error in Google HTML to Markdown conversion", err);
-      throw err;
-    }
-  }
-
   async getCompletion(
     mode: OperationMode,
     params: CompletionArgs | ExtractionArgs
