@@ -106,4 +106,6 @@ const checkAndInstall = async () => {
   }
 };
 
-checkAndInstall();
+if (process.env.GITHUB_ACTIONS !== "true") {
+  checkAndInstall();
+}
