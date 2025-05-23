@@ -7,7 +7,7 @@ module.exports = {
     "^.+\\.tsx?$": [
       "ts-jest",
       {
-        tsconfig: "node-zerox/tsconfig.json",
+        tsconfig: "node-hadid/tsconfig.json",
       },
     ],
   },

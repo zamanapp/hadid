@@ -1,19 +1,21 @@
 {
-  "name": "zerox",
-  "version": "1.1.19",
-  "description": "ocr documents using gpt-4o-mini",
-  "main": "node-zerox/dist/index.js",
+  "name": "@zamanapp/hadid",
+  "version": "1.2.0",
+  "description": "OCR documents using OpenAI, Claude, Azure, and Google. Forked from @getomni-ai/zerox",
+  "main": "node-hadid/dist/index.js",
   "scripts": {
-    "clean": "rm -rf node-zerox/dist",
-    "build": "npm run clean && tsc -p node-zerox/tsconfig.json",
-    "postinstall": "node node-zerox/scripts/install-dependencies.js",
+    "clean": "rm -rf node-hadid/dist",
+    "build": "npm run clean && tsc -p node-hadid/tsconfig.json",
+    "postinstall": "node node-hadid/scripts/install-dependencies.js",
     "prepublishOnly": "npm run build",
-    "test": "ts-node node-zerox/tests/index.ts",
-    "test:performance": "jest node-zerox/tests/performance.test.ts --runInBand"
+    "test": "ts-node node-hadid/tests/index.ts",
+    "claude-test": "ts-node node-hadid/tests/claude-test.ts",
+    "test:performance": "jest node-hadid/tests/performance.test.ts --runInBand"
   },
   "author": "tylermaran",
   "license": "MIT",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.41.0",
     "@aws-sdk/client-bedrock-runtime": "^3.734.0",
     "@google/genai": "^0.9.0",
     "axios": "^1.7.2",
@@ -36,6 +38,8 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
     "@types/fs-extra": "^11.0.4",
     "@types/heic-convert": "^2.1.0",
     "@types/jest": "^29.5.14",
@@ -47,22 +51,23 @@
     "dotenv": "^16.4.5",
     "jest": "^29.7.0",
     "prompts": "^2.4.2",
+    "semantic-release": "^22.0.12",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.3"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/getomni-ai/zerox.git"
+    "url": "git+https://github.com/fazaamal/hadid"
   },
   "keywords": [
     "ocr",
     "document",
     "llm"
   ],
-  "types": "node-zerox/dist/index.d.ts",
+  "types": "node-hadid/dist/index.d.ts",
   "bugs": {
-    "url": "https://github.com/getomni-ai/zerox/issues"
+    "url": "https://github.com/fazaamal/hadid/issues"
   },
-  "homepage": "https://github.com/getomni-ai/zerox#readme"
+  "homepage": "https://github.com/fazaamal/hadid#readme"
 }

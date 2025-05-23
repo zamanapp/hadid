@@ -1,10 +1,10 @@
-# Define the package directory for zerox
-PACKAGE_DIR := py_zerox
+# Define the package directory for hadid
+PACKAGE_DIR := py_hadid
 
 # Define directory configs
 VENV_DIR := .venv
 DIST_DIR := ${PACKAGE_DIR}/dist
-SRC_DIR := $(PACKAGE_DIR)/zerox
+SRC_DIR := $(PACKAGE_DIR)/hadid
 TEST_DIR := $(PACKAGE_DIR)/tests
 
 # Define the build configs

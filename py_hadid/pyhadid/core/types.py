@@ -3,21 +3,22 @@ from dataclasses import dataclass, field
 
 
 @dataclass
-class ZeroxArgs:
+class HadidArgs:
     """
-    Dataclass to store the arguments for the Zerox class.
+    Dataclass to store the arguments for the Hadid class.
     """
 
     file_path: str
     cleanup: bool = True
     concurrency: int = 10
     maintain_format: bool = False
-    model: str = "gpt-4o-mini",
+    model: str = ("gpt-4o-mini",)
     output_dir: Optional[str] = None
     temp_dir: Optional[str] = None
     custom_system_prompt: Optional[str] = None
     select_pages: Optional[Union[int, Iterable[int]]] = None
     kwargs: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class Page:
@@ -31,9 +32,9 @@ class Page:
 
 
 @dataclass
-class ZeroxOutput:
+class HadidOutput:
     """
-    Dataclass to store the output of the Zerox class.
+    Dataclass to store the output of the Hadid class.
     """
 
     completion_time: float

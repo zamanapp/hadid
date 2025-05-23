@@ -19,6 +19,7 @@ import { ASPECT_RATIO_THRESHOLD } from "../constants";
 import {
   ConvertPdfOptions,
   ExcelSheetContent,
+  ModelInterface,
   Page,
   PageStatus,
 } from "../types";
@@ -153,13 +154,13 @@ export const convertFileToPdf = async ({
 export const convertPdfToImages = async ({
   imageDensity = 300,
   imageHeight = 2048,
-  pagesToConvertAsImages,
+  pagesToProcess,
   pdfPath,
   tempDir,
 }: {
   imageDensity?: number;
   imageHeight?: number;
-  pagesToConvertAsImages: number | number[];
+  pagesToProcess: number | number[];
   pdfPath: string;
   tempDir: string;
 }): Promise<string[]> => {
@@ -182,7 +183,7 @@ export const convertPdfToImages = async ({
     try {
       const storeAsImage = fromPath(pdfPath, options);
       const convertResults: WriteImageResponse[] = await storeAsImage.bulk(
-        pagesToConvertAsImages
+        pagesToProcess
       );
       // Validate that all pages were converted
       return convertResults.map((result) => {
@@ -192,11 +193,7 @@ export const convertPdfToImages = async ({
         return result.path;
       });
     } catch (err) {
-      return await convertPdfWithPoppler(
-        pagesToConvertAsImages,
-        pdfPath,
-        options
-      );
+      return await convertPdfWithPoppler(pagesToProcess, pdfPath, options);
     }
   } catch (err) {
     console.error("Error during PDF conversion:", err);
@@ -208,7 +205,7 @@ export const convertPdfToImages = async ({
 export const convertExcelToHtml = async (
   filePath: string
 ): Promise<ExcelSheetContent[]> => {
-  const tableClass = "zerox-excel-table";
+  const tableClass = "hadid-excel-table";
 
   try {
     if (!(await fs.pathExists(filePath))) {
@@ -217,7 +214,7 @@ export const convertExcelToHtml = async (
 
     const workbook = xlsx.readFile(filePath, {
       type: "file",
-      cellStyles: true,
+      cellStyles: false,
       cellHTML: true,
     });
 
@@ -275,7 +272,7 @@ export const convertExcelToHtml = async (
 
 // Alternative PDF to PNG conversion using Poppler
 const convertPdfWithPoppler = async (
-  pagesToConvertAsImages: number | number[],
+  pagesToProcess: number | number[],
   pdfPath: string,
   options: ConvertPdfOptions
 ): Promise<string[]> => {
@@ -288,12 +285,12 @@ const convertPdfWithPoppler = async (
     await execAsync(cmd);
   };
 
-  if (pagesToConvertAsImages === -1) {
+  if (pagesToProcess === -1) {
     await run();
-  } else if (typeof pagesToConvertAsImages === "number") {
-    await run(pagesToConvertAsImages, pagesToConvertAsImages);
-  } else if (Array.isArray(pagesToConvertAsImages)) {
-    await Promise.all(pagesToConvertAsImages.map((page) => run(page, page)));
+  } else if (typeof pagesToProcess === "number") {
+    await run(pagesToProcess, pagesToProcess);
+  } else if (Array.isArray(pagesToProcess)) {
+    await Promise.all(pagesToProcess.map((page) => run(page, page)));
   }
 
   const convertResults = await fs.readdir(savePath);
@@ -305,13 +302,120 @@ const convertPdfWithPoppler = async (
     .map((result) => path.join(savePath, result));
 };
 
+/**
+ * Converts an Excel file to Markdown format
+ * @param filePath Path to the Excel file
+ * @returns Array of objects containing sheet name and markdown content
+ */
+export const convertExcelToMarkdown = async (
+  filePath: string
+): Promise<ExcelSheetContent[]> => {
+  try {
+    if (!(await fs.pathExists(filePath))) {
+      throw new Error(`Excel file not found: ${filePath}`);
+    }
+
+    const workbook = xlsx.readFile(filePath, {
+      type: "file",
+    });
+
+    if (!workbook || !workbook.SheetNames || workbook.SheetNames.length === 0) {
+      throw new Error("Invalid Excel file or no sheets found");
+    }
+
+    const sheets: ExcelSheetContent[] = [];
+
+    for (const sheetName of workbook.SheetNames) {
+      const worksheet = workbook.Sheets[sheetName];
+
+      const jsonData = xlsx.utils.sheet_to_json<any[]>(worksheet, {
+        header: 1,
+      });
+
+      let markdownContent = `## Sheet: ${sheetName}\n\n`;
+
+      if (jsonData.length > 0) {
+        // Create header row if data exists
+        if (jsonData[0] && jsonData[0].length > 0) {
+          // Add header row
+          markdownContent += "| ";
+          jsonData[0].forEach((cell) => {
+            const cellContent =
+              cell !== null && cell !== undefined ? cell.toString() : "";
+            markdownContent += `${cellContent} | `;
+          });
+          markdownContent += "\n";
+
+          // Add separator row
+          markdownContent += "| ";
+          jsonData[0].forEach(() => {
+            markdownContent += "--- | ";
+          });
+          markdownContent += "\n";
+
+          // Add data rows
+          for (let i = 1; i < jsonData.length; i++) {
+            if (jsonData[i] && jsonData[i].length > 0) {
+              markdownContent += "| ";
+
+              // Ensure we have the same number of cells as the header
+              const row = jsonData[i];
+              const headerLength = jsonData[0].length;
+
+              for (let j = 0; j < headerLength; j++) {
+                const cell = j < row.length ? row[j] : "";
+                const cellContent =
+                  cell !== null && cell !== undefined ? cell.toString() : "";
+                markdownContent += `${cellContent} | `;
+              }
+
+              markdownContent += "\n";
+            }
+          }
+        } else {
+          markdownContent += "No data in this sheet.\n";
+        }
+      } else {
+        markdownContent += "Empty sheet.\n";
+      }
+
+      sheets.push({
+        sheetName,
+        content: markdownContent,
+        contentLength: markdownContent.length,
+      });
+    }
+
+    return sheets;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Extracts pages from a structured data file (like Excel)
 export const extractPagesFromStructuredDataFile = async (
-  filePath: string
+  filePath: string,
+  convertSpreadsheetToMarkdown: boolean,
+  pagesToProcess: number | number[]
 ): Promise<Page[]> => {
   if (isExcelFile(filePath)) {
-    const sheets = await convertExcelToHtml(filePath);
+    let allSheets;
+
+    if (convertSpreadsheetToMarkdown) {
+      allSheets = await convertExcelToMarkdown(filePath);
+    } else {
+      allSheets = await convertExcelToHtml(filePath);
+    }
+
+    const sheets =
+      pagesToProcess === -1
+        ? allSheets
+        : Array.isArray(pagesToProcess)
+        ? allSheets.filter((_, index) => pagesToProcess.includes(index + 1))
+        : allSheets.slice(0, pagesToProcess);
+
     const pages: Page[] = [];
+
     sheets.forEach((sheet: ExcelSheetContent, index: number) => {
       pages.push({
         content: sheet.content,
@@ -320,6 +424,7 @@ export const extractPagesFromStructuredDataFile = async (
         status: PageStatus.SUCCESS,
       });
     });
+
     return pages;
   }
 

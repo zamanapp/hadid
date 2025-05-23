@@ -1,10 +1,10 @@
-from .core import zerox
+from .core import hadid
 from .constants.prompts import Prompts
 
 DEFAULT_SYSTEM_PROMPT = Prompts.DEFAULT_SYSTEM_PROMPT
 
 __all__ = [
-    "zerox",
+    "hadid",
     "Prompts",
     "DEFAULT_SYSTEM_PROMPT",
 ]

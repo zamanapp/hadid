@@ -38,12 +38,12 @@ import {
   OperationMode,
   Page,
   PageStatus,
-  ZeroxArgs,
-  ZeroxOutput,
+  HadidArgs,
+  HadidOutput,
 } from "./types";
 import { NUM_STARTING_WORKERS } from "./constants";
 
-export const zerox = async ({
+export const hadid = async ({
   cleanup = true,
   concurrency = 10,
   correctOrientation = true,
@@ -71,12 +71,13 @@ export const zerox = async ({
   modelProvider = ModelProvider.OPENAI,
   openaiAPIKey = "",
   outputDir,
-  pagesToConvertAsImages = -1,
+  pagesToProcess = -1,
   prompt,
   schema,
   tempDir = os.tmpdir(),
   trimEdges = true,
-}: ZeroxArgs): Promise<ZeroxOutput> => {
+  convertSpreadsheetToMarkdown = true,
+}: HadidArgs): Promise<HadidOutput> => {
   let extracted: Record<string, unknown> | null = null;
   let extractedLogprobs: LogprobPage[] = [];
   let inputTokenCount: number = 0;
@@ -142,7 +143,7 @@ export const zerox = async ({
     const rand = Math.floor(1000 + Math.random() * 9000).toString();
     const tempDirectory = path.join(
       tempDir || os.tmpdir(),
-      `zerox-temp-${rand}`
+      `hadid-temp-${rand}`
     );
     const sourceDirectory = path.join(tempDirectory, "source");
     await fs.ensureDir(sourceDirectory);
@@ -155,16 +156,27 @@ export const zerox = async ({
 
     if (!localPath) throw "Failed to save file to local drive";
 
-    // Sort the `pagesToConvertAsImages` array to make sure we use the right index
+    // Sort the `pagesToProcess` array to make sure we use the right index
     // for `formattedPages` as `pdf2pic` always returns images in order
-    if (Array.isArray(pagesToConvertAsImages)) {
-      pagesToConvertAsImages.sort((a, b) => a - b);
+    if (Array.isArray(pagesToProcess)) {
+      pagesToProcess.sort((a, b) => a - b);
     }
 
     // Check if the file is a structured data file (like Excel).
     // If so, skip the image conversion process and extract the pages directly
     if (isStructuredDataFile(localPath)) {
-      pages = await extractPagesFromStructuredDataFile(localPath);
+      const modelInstance = createModel({
+        credentials,
+        llmParams,
+        model,
+        provider: modelProvider,
+      });
+
+      pages = await extractPagesFromStructuredDataFile(
+        localPath,
+        convertSpreadsheetToMarkdown,
+        pagesToProcess
+      );
     } else {
       // Read the image file or convert the file to images
       if (
@@ -193,19 +205,19 @@ export const zerox = async ({
             tempDir: sourceDirectory,
           });
         }
-        if (pagesToConvertAsImages !== -1) {
+        if (pagesToProcess !== -1) {
           const totalPages = await getNumberOfPagesFromPdf({ pdfPath });
-          pagesToConvertAsImages = Array.isArray(pagesToConvertAsImages)
-            ? pagesToConvertAsImages
-            : [pagesToConvertAsImages];
-          pagesToConvertAsImages = pagesToConvertAsImages.filter(
+          pagesToProcess = Array.isArray(pagesToProcess)
+            ? pagesToProcess
+            : [pagesToProcess];
+          pagesToProcess = pagesToProcess.filter(
             (page) => page > 0 && page <= totalPages
           );
         }
         imagePaths = await convertPdfToImages({
           imageDensity,
           imageHeight,
-          pagesToConvertAsImages,
+          pagesToProcess,
           pdfPath,
           tempDir: sourceDirectory,
         });
@@ -258,16 +270,16 @@ export const zerox = async ({
         ): Promise<Page> => {
           let pageNumber: number;
           // If we convert all pages, just use the array index
-          if (pagesToConvertAsImages === -1) {
+          if (pagesToProcess === -1) {
             pageNumber = pageIndex + 1;
           }
           // Else if we convert specific pages, use the page number from the parameter
-          else if (Array.isArray(pagesToConvertAsImages)) {
-            pageNumber = pagesToConvertAsImages[pageIndex];
+          else if (Array.isArray(pagesToProcess)) {
+            pageNumber = pagesToProcess[pageIndex];
           }
           // Else, the parameter is a number and use it for the page number
           else {
-            pageNumber = pagesToConvertAsImages;
+            pageNumber = pagesToProcess;
           }
 
           const imageBuffer = await fs.readFile(imagePath);

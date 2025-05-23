@@ -1,5 +1,5 @@
 class Prompts:
-    """Class for storing prompts for the Zerox system."""
+    """Class for storing prompts for the Hadid system."""
 
     DEFAULT_SYSTEM_PROMPT = """
     Convert the following document to markdown.
