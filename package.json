@@ -1,5 +1,5 @@
 {
-  "name": "hadid",
+  "name": "@zamanapp/hadid",
   "version": "1.2.0",
   "description": "OCR documents using OpenAI, Claude, Azure, and Google. Forked from @getomni-ai/zerox",
   "main": "node-hadid/dist/index.js",
@@ -38,6 +38,8 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
     "@types/fs-extra": "^11.0.4",
     "@types/heic-convert": "^2.1.0",
     "@types/jest": "^29.5.14",
@@ -49,6 +51,7 @@
     "dotenv": "^16.4.5",
     "jest": "^29.7.0",
     "prompts": "^2.4.2",
+    "semantic-release": "^22.0.12",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.3"

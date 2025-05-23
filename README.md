@@ -20,10 +20,10 @@ Or visit our full documentation at: <https://docs.getomni.ai/hadid>
 
 ## Getting Started
 
-Hadid is available as both a Node and Python package.
+Hadid is available as a npm package
 
 - [Node README](#node-hadid) - [npm package](https://www.npmjs.com/package/hadid)
-- [Python README](#python-hadid) - [pip package](https://pypi.org/project/py-hadid/)
+- [Python README](#python-zerox) - [pip package](https://pypi.org/project/py-zerox/)
 
 | Feature                   | Node.js                     | Python                     |
 | ------------------------- | --------------------------- | -------------------------- |
