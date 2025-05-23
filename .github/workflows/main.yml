@@ -28,12 +28,14 @@ jobs:
         run: nci
       - name: Build
         run: nr build
+
       - name: Preparing a release 🚀
         uses: cycjimmy/semantic-release-action@v4
         with:
+          semantic_version: 21
           extra_plugins: |
-            @semantic-release/changelog
-            @semantic-release/git
+            @semantic-release/changelog@6
+            @semantic-release/git@10
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_GLOBAL_TOKEN }}

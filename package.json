@@ -59,7 +59,7 @@
   "packageManager": "pnpm@8.15.3",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/fazaamal/hadid"
+    "url": "git+https://github.com/zamanapp/hadid.git"
   },
   "keywords": [
     "ocr",
@@ -68,7 +68,7 @@
   ],
   "types": "node-hadid/dist/index.d.ts",
   "bugs": {
-    "url": "https://github.com/fazaamal/hadid/issues"
+    "url": "https://github.com/zamanapp/hadid/issues"
   },
-  "homepage": "https://github.com/fazaamal/hadid#readme"
+  "homepage": "https://github.com/zamanapp/hadid#readme"
 }
