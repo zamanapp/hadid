@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/zamanapp/hadid/compare/v1.0.0...v1.1.0) (2025-05-23)
+
+
+### Features
+
+* add publishConfig for public access in package.json ([1824cee](https://github.com/zamanapp/hadid/commit/1824cee43e6b5b60c2958703b6a2dea3fe02ccce))
+
 # 1.0.0 (2025-05-23)
 
 
