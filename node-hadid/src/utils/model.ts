@@ -9,6 +9,18 @@ import {
 } from "../types";
 import { formatMarkdown } from "./common";
 
+export function truncateByWordCount(text: string, maxTokens: number): string {
+  // Rough approximation: ~0.75 words = 1 token for English
+  const maxWords = Math.floor(maxTokens * 0.75);
+  const words = text.split(" ");
+
+  if (words.length <= maxWords) {
+    return text;
+  }
+
+  return words.slice(0, maxWords).join(" ") + "...";
+}
+
 export const isCompletionResponse = (
   mode: OperationMode,
   response: CompletionResponse | ExtractionResponse

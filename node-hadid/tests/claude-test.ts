@@ -56,23 +56,18 @@ Formatting Preservation
     },
     model: ModelOptions.ANTHROPIC_CLAUDE_3_5_HAIKU,
     modelProvider: ModelProvider.CLAUDE,
-    pagesToProcess: Array.from({ length: 3 }, (_, i) => i + 1),
-    prompt,
+    pagesToProcess: Array.from({ length: 1 }, (_, i) => i + 1),
+    // prompt,
     schema: {
-      tags: `Extract relevant tags from documents to improve searchability and categorisation.
+      tags: `
+You are a tagging assistant. Your task is to extract up to 15 relevant and distinct tags from the provided text. Return only a JSON array of strings. Maintain the original casing and spacing of each tag. Do not include duplicates. Do not add any explanations, headings, or other text—only the JSON array.
 
-    Given the following text, extract up to 15 of the most relevant tags. Tags should include important keywords and named entities such as people, organisations, locations, events, and topics. Tags should make the document easier to find via search.
+Example output:
 
-    Guidelines:
-    	•	Return at most 15 tags
-    	•	Preserve casing and spacing for proper nouns (e.g. “United Nations”, “John Smith”)
-    	•	Remove duplicates
-    	•	Tags should be relevant, specific, and search-friendly
-
-    Output format (stringified JSON array):
-    ["tag1", "tag2", "tag3", "..."]`,
+["Machine Learning", "Neural Networks", "Training Data", "Supervised Learning"]`,
     },
     convertSpreadsheetToMarkdown: true,
+    tokenLimitPerPage: 10000,
   });
 
   console.log(result);

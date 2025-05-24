@@ -15,6 +15,7 @@ import {
   convertKeysToCamelCase,
   convertKeysToSnakeCase,
   encodeImageToBase64,
+  truncateByWordCount,
 } from "../utils";
 import { CONSISTENCY_PROMPT, SYSTEM_PROMPT_BASE } from "../constants";
 import fs from "fs-extra";
@@ -85,7 +86,12 @@ export default class AzureModel implements ModelInterface {
     }
 
     if (typeof input === "string") {
-      return [{ text: input, type: "text" }];
+      return [
+        {
+          text: truncateByWordCount(input, options?.tokenLimitPerPage ?? 20000),
+          type: "text",
+        },
+      ];
     }
 
     const { imagePaths, text } = input;

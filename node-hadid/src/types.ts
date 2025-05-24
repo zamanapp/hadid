@@ -41,6 +41,7 @@ export interface HadidArgs {
   tempDir?: string;
   trimEdges?: boolean;
   convertSpreadsheetToMarkdown?: boolean;
+  tokenLimitPerPage?: number;
 }
 
 export interface HadidOutput {
@@ -195,6 +196,7 @@ export interface ExtractionArgs {
     correctOrientation?: boolean;
     scheduler: Tesseract.Scheduler | null;
     trimEdges?: boolean;
+    tokenLimitPerPage?: number;
   };
   prompt?: string;
   schema: Record<string, unknown>;
@@ -267,6 +269,7 @@ export interface MessageContentArgs {
     correctOrientation?: boolean;
     scheduler: Tesseract.Scheduler | null;
     trimEdges?: boolean;
+    tokenLimitPerPage?: number;
   };
 }
 

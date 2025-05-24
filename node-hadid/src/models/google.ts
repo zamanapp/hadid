@@ -2,6 +2,7 @@ import {
   cleanupImage,
   convertKeysToSnakeCase,
   encodeImageToBase64,
+  truncateByWordCount,
 } from "../utils";
 import {
   CompletionArgs,
@@ -78,7 +79,12 @@ export default class GoogleModel implements ModelInterface {
     }
 
     if (typeof input === "string") {
-      return [{ text: input }];
+      return [
+        {
+          text: truncateByWordCount(input, options?.tokenLimitPerPage ?? 20000),
+          type: "text",
+        },
+      ];
     }
 
     const { imagePaths, text } = input;
