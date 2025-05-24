@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/zamanapp/hadid/compare/v1.1.0...v1.2.0) (2025-05-24)
+
+
+### Features
+
+* add tokenLimitPerPage option and truncate input text by word count ([aa3bc89](https://github.com/zamanapp/hadid/commit/aa3bc89acbc181882209976eba63028a742911ad))
+
 # [1.1.0](https://github.com/zamanapp/hadid/compare/v1.0.0...v1.1.0) (2025-05-23)
 
 
