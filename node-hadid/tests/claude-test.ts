@@ -67,7 +67,7 @@ Example output:
 ["Machine Learning", "Neural Networks", "Training Data", "Supervised Learning"]`,
     },
     convertSpreadsheetToMarkdown: true,
-    tokenLimitPerPage: 10000,
+    wordLimitPerPage: 10000,
   });
 
   console.log(result);

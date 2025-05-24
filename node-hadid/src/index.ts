@@ -77,7 +77,7 @@ export const hadid = async ({
   tempDir = os.tmpdir(),
   trimEdges = true,
   convertSpreadsheetToMarkdown = true,
-  tokenLimitPerPage = 20000,
+  wordLimitPerPage = 200000,
 }: HadidArgs): Promise<HadidOutput> => {
   let extracted: Record<string, unknown> | null = null;
   let extractedLogprobs: LogprobPage[] = [];
@@ -424,7 +424,7 @@ export const hadid = async ({
                     correctOrientation,
                     scheduler,
                     trimEdges,
-                    tokenLimitPerPage,
+                    wordLimitPerPage,
                   },
                   prompt: extractionPrompt,
                   schema,
@@ -521,7 +521,7 @@ export const hadid = async ({
                           correctOrientation,
                           scheduler,
                           trimEdges,
-                          tokenLimitPerPage,
+                          wordLimitPerPage,
                         },
                         prompt: extractionPrompt,
                         schema: fullDocSchema,

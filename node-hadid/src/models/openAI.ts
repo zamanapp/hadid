@@ -85,7 +85,7 @@ export default class OpenAIModel implements ModelInterface {
     if (typeof input === "string") {
       return [
         {
-          text: truncateByWordCount(input, options?.tokenLimitPerPage ?? 20000),
+          text: truncateByWordCount(input, options?.wordLimitPerPage ?? 20000),
           type: "text",
         },
       ];
