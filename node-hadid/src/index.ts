@@ -355,7 +355,7 @@ export const hadid = async ({
             page = {
               content: "",
               contentLength: 0,
-              error: `Failed to process page ${pageNumber}: ${error}`,
+              error: `Failed to process this page ${pageNumber}: ${error}`,
               page: pageNumber,
               status: PageStatus.ERROR,
             };
