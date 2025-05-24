@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/zamanapp/hadid/compare/v1.2.0...v1.2.1) (2025-05-24)
+
+
+### Bug Fixes
+
+* wordlimit increase ([c9957cf](https://github.com/zamanapp/hadid/commit/c9957cf22ce6c5d8900b6014c409741e002fbc20))
+
 # [1.2.0](https://github.com/zamanapp/hadid/compare/v1.1.0...v1.2.0) (2025-05-24)
 
 

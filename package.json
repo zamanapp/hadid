@@ -1,6 +1,6 @@
 {
   "name": "@zamanapp/hadid",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "OCR documents using OpenAI, Claude, Azure, and Google. Forked from @getomni-ai/zerox",
   "main": "node-hadid/dist/index.js",
   "publishConfig": {
