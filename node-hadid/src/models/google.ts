@@ -18,6 +18,7 @@ import {
 import { CONSISTENCY_PROMPT, SYSTEM_PROMPT_BASE } from "../constants";
 import { GoogleGenAI, createPartFromBase64 } from "@google/genai";
 import fs from "fs-extra";
+import fileType from "file-type";
 
 export default class GoogleModel implements ModelInterface {
   private client: GoogleGenAI;
@@ -104,9 +105,13 @@ export default class GoogleModel implements ModelInterface {
     // Build the prompt parts
     const promptParts: any = [];
 
+    const type = await fileType.fromBuffer(buffers[0]);
     // Add image contents
     const imageContents = buffers.map((buffer) =>
-      createPartFromBase64(encodeImageToBase64(buffer), "image/png")
+      createPartFromBase64(
+        encodeImageToBase64(buffer),
+        type?.mime || "image/png"
+      )
     );
     promptParts.push(...imageContents);
 

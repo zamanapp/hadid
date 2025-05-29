@@ -14,6 +14,9 @@ dependencies:
   '@google/genai':
     specifier: ^0.9.0
     version: 0.9.0
+  '@types/file-type':
+    specifier: ^10.9.3
+    version: 10.9.3
   axios:
     specifier: ^1.7.2
     version: 1.9.0
@@ -2191,6 +2194,13 @@ packages:
     dependencies:
       '@babel/types': 7.27.1
     dev: true
+
+  /@types/file-type@10.9.3:
+    resolution: {integrity: sha512-xTVEthISP8tJ3qWpWKmetPt/Amusrfr7KdMZgg33lGw2g0YpDmECZYqh1As37tbgiAXl28NU+XHjw806YfboTg==}
+    deprecated: This is a stub types definition. file-type provides its own type definitions, so you do not need this installed.
+    dependencies:
+      file-type: 16.5.4
+    dev: false
 
   /@types/fs-extra@11.0.4:
     resolution: {integrity: sha512-yTbItCNreRooED33qjunPthRcSjERP1r4MqCZc7wv0u2sUkzTFp45tgUfS5+r7FrZPdmCCNflLhVSP/o+SemsQ==}

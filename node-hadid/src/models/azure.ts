@@ -19,6 +19,7 @@ import {
 } from "../utils";
 import { CONSISTENCY_PROMPT, SYSTEM_PROMPT_BASE } from "../constants";
 import fs from "fs-extra";
+import fileType from "file-type";
 
 export default class AzureModel implements ModelInterface {
   private client: AzureOpenAI;
@@ -119,11 +120,15 @@ export default class AzureModel implements ModelInterface {
       });
     }
 
+    const type = await fileType.fromBuffer(buffers[0]);
+
     // Add image to request
     const imageContents = buffers.map((buffer) => ({
       type: "image_url",
       image_url: {
-        url: `data:image/png;base64,${encodeImageToBase64(buffer)}`,
+        url: `data:${type?.mime || "image/png"};base64,${encodeImageToBase64(
+          buffer
+        )}`,
       },
     }));
     messages.push({ role: "user", content: imageContents });

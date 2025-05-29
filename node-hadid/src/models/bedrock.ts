@@ -21,6 +21,7 @@ import {
 } from "../utils";
 import { CONSISTENCY_PROMPT, SYSTEM_PROMPT_BASE } from "../constants";
 import fs from "fs-extra";
+import fileType from "file-type";
 
 // Currently only supports Anthropic models
 export default class BedrockModel implements ModelInterface {
@@ -127,11 +128,12 @@ export default class BedrockModel implements ModelInterface {
       systemPrompt += `\n\n${CONSISTENCY_PROMPT(priorPage)}`;
     }
 
+    const type = await fileType.fromBuffer(buffers[0]);
     // Add image to request
     const imageContents = buffers.map((buffer) => ({
       source: {
         data: encodeImageToBase64(buffer),
-        media_type: "image/png",
+        media_type: type?.mime || "image/png",
         type: "base64",
       },
       type: "image",

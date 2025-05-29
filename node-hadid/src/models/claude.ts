@@ -20,6 +20,7 @@ import { CONSISTENCY_PROMPT, SYSTEM_PROMPT_BASE } from "../constants";
 import axios from "axios";
 import fs from "fs-extra";
 import { Anthropic } from "@anthropic-ai/sdk";
+import fileType from "file-type";
 
 export default class ClaudeModel implements ModelInterface {
   private apiKey: string;
@@ -72,6 +73,7 @@ export default class ClaudeModel implements ModelInterface {
             scheduler: options?.scheduler ?? null,
             trimEdges: options?.trimEdges ?? false,
           });
+
           return buffers.map((buffer) => ({
             type: "image",
             source: {
@@ -86,6 +88,8 @@ export default class ClaudeModel implements ModelInterface {
     };
 
     if (Array.isArray(input)) {
+      console.log("Processing array of inputs:", input);
+
       return processImages(input);
     }
 
@@ -123,34 +127,22 @@ export default class ClaudeModel implements ModelInterface {
       });
     }
 
+    const type = await fileType.fromBuffer(buffers[0]);
+
     // Add image to request
-    const imageContents = buffers.map((buffer) => ({
-      type: "image",
-      source: {
-        type: "base64",
-        media_type: "image/png",
-        data: encodeImageToBase64(buffer),
-      },
-    }));
+    const imageContents = buffers.map((buffer) => {
+      return {
+        type: "image",
+        source: {
+          type: "base64",
+          media_type: type?.mime || "image/png",
+          data: encodeImageToBase64(buffer),
+        },
+      };
+    });
     messages.push({ role: "user", content: imageContents });
 
     try {
-      // const response = await axios.post(
-      //   "https://api.anthropic.com/v1/messages",
-      //   {
-      //     messages,
-      //     model: this.model,
-      //     system: systemPrompt,
-      //     ...convertKeysToSnakeCase(this.llmParams ?? null),
-      //   },
-      //   {
-      //     headers: {
-      //       "x-api-key": `${this.apiKey}`,
-      //       "Content-Type": "application/json",
-      //     },
-      //   }
-      // );
-
       const response = await this.client.messages.create({
         model: this.model,
         max_tokens: this.llmParams?.maxTokens || 2048,
@@ -165,12 +157,6 @@ export default class ClaudeModel implements ModelInterface {
         inputTokens: data.usage.input_tokens,
         outputTokens: data.usage.output_tokens,
       };
-
-      // if (this.llmParams?.logprobs) {
-      //   result["logprobs"] = convertKeysToCamelCase(
-      //     data.choices[0].logprobs
-      //   )?.content;
-      // }
 
       return result;
     } catch (err) {
@@ -192,28 +178,20 @@ export default class ClaudeModel implements ModelInterface {
         messages.push({ role: "assistant", content: prompt });
       }
 
+      let content = await this.createMessageContent({ input, options });
+
+      if (content[0].text <= 10) {
+        return {
+          extracted: {},
+          inputTokens: 0,
+          outputTokens: 0,
+        };
+      }
+
       messages.push({
         role: "user",
-        content: await this.createMessageContent({ input, options }),
+        content,
       });
-
-      // const response = await axios.post(
-      //   "https://api.anthropic.com/v1/messages",
-      //   {
-      //     messages,
-      //     model: this.model,
-      //     system: `You are an assistant that extracts information from user documents uploaded. Your output must strictly adhere to the following JSON schema: ${JSON.stringify(
-      //       schema
-      //     )}. Ensure the response is valid JSON and matches the schema.`,
-      //     ...convertKeysToSnakeCase(this.llmParams ?? null),
-      //   },
-      //   {
-      //     headers: {
-      //       "x-api-key": `${this.apiKey}`,
-      //       "Content-Type": "application/json",
-      //     },
-      //   }
-      // );
 
       const response = await this.client.messages.create({
         model: this.model,
