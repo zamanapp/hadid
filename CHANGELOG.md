@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/zamanapp/hadid/compare/v1.2.1...v1.2.2) (2025-05-29)
+
+
+### Bug Fixes
+
+* handle jpg file types ([ecfd194](https://github.com/zamanapp/hadid/commit/ecfd1946f8d796233ca96d7d9aec3d8c778c22e4))
+
 ## [1.2.1](https://github.com/zamanapp/hadid/compare/v1.2.0...v1.2.1) (2025-05-24)
 
 
