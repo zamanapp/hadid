@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/zamanapp/hadid/compare/v1.2.2...v1.3.0) (2025-06-01)
+
+
+### Features
+
+* update HadidArgs interface to make filePath optional and add textContent property ([15198bf](https://github.com/zamanapp/hadid/commit/15198bf51b53e93825febb1277a06939104cf67c))
+
 ## [1.2.2](https://github.com/zamanapp/hadid/compare/v1.2.1...v1.2.2) (2025-05-29)
 
 
