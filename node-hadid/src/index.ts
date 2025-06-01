@@ -3,6 +3,7 @@ import os from "os";
 import path from "path";
 import pLimit from "p-limit";
 import Tesseract from "tesseract.js";
+import { TokenTextSplitter } from "@langchain/textsplitters";
 
 import "./handleWarnings";
 import {
@@ -42,6 +43,7 @@ import {
   HadidOutput,
 } from "./types";
 import { NUM_STARTING_WORKERS } from "./constants";
+import { text } from "stream/consumers";
 
 export const hadid = async ({
   cleanup = true,
@@ -78,6 +80,7 @@ export const hadid = async ({
   trimEdges = true,
   convertSpreadsheetToMarkdown = true,
   wordLimitPerPage = 200000,
+  textContent,
 }: HadidArgs): Promise<HadidOutput> => {
   let extracted: Record<string, unknown> | null = null;
   let extractedLogprobs: LogprobPage[] = [];
@@ -105,9 +108,33 @@ export const hadid = async ({
   if (Object.values(credentials).every((credential) => !credential)) {
     throw new Error("Missing credentials");
   }
-  if (!filePath || !filePath.length) {
-    throw new Error("Missing file path");
+  if (
+    (!filePath || !filePath.length) &&
+    (!textContent || !textContent.length)
+  ) {
+    throw new Error("Missing file path or text content");
   }
+
+  if (textContent && textContent.length) {
+    if (prompt) {
+      throw new Error(
+        "Prompt is not supported when textContent is provided. Please remove the prompt. Only extraction is supported in this mode."
+      );
+    }
+
+    if (filePath && filePath.length) {
+      throw new Error(
+        "File path is not supported when textContent is provided. Please remove the filePath. Only extraction is supported in this mode."
+      );
+    }
+
+    if (!schema) {
+      throw new Error(
+        "Schema is required when textContent is provided for extraction"
+      );
+    }
+  }
+
   if (enableHybridExtraction && (directImageExtraction || extractOnly)) {
     throw new Error(
       "Hybrid extraction cannot be used in direct image extraction or extract-only mode"
@@ -140,260 +167,24 @@ export const hadid = async ({
   }
 
   try {
-    // Ensure temp directory exists + create temp folder
-    const rand = Math.floor(1000 + Math.random() * 9000).toString();
-    const tempDirectory = path.join(
-      tempDir || os.tmpdir(),
-      `hadid-temp-${rand}`
-    );
-    const sourceDirectory = path.join(tempDirectory, "source");
-    await fs.ensureDir(sourceDirectory);
-
-    // Download the PDF. Get file name.
-    const { extension, localPath } = await downloadFile({
-      filePath,
-      tempDir: sourceDirectory,
-    });
-
-    if (!localPath) throw "Failed to save file to local drive";
-
-    // Sort the `pagesToProcess` array to make sure we use the right index
-    // for `formattedPages` as `pdf2pic` always returns images in order
-    if (Array.isArray(pagesToProcess)) {
-      pagesToProcess.sort((a, b) => a - b);
-    }
-
-    // Check if the file is a structured data file (like Excel).
-    // If so, skip the image conversion process and extract the pages directly
-    if (isStructuredDataFile(localPath)) {
-      const modelInstance = createModel({
-        credentials,
-        llmParams,
-        model,
-        provider: modelProvider,
-      });
-
-      pages = await extractPagesFromStructuredDataFile(
-        localPath,
-        convertSpreadsheetToMarkdown,
-        pagesToProcess
-      );
-    } else {
-      // Read the image file or convert the file to images
-      if (
-        extension === ".png" ||
-        extension === ".jpg" ||
-        extension === ".jpeg"
-      ) {
-        imagePaths = [localPath];
-      } else if (extension === ".heic") {
-        const imagePath = await convertHeicToJpeg({
-          localPath,
-          tempDir: sourceDirectory,
-        });
-        imagePaths = [imagePath];
-      } else {
-        let pdfPath: string;
-        const isCFBFile = await checkIsCFBFile(localPath);
-        const isPdf = await checkIsPdfFile(localPath);
-        if ((extension === ".pdf" || isPdf) && !isCFBFile) {
-          pdfPath = localPath;
-        } else {
-          // Convert file to PDF if necessary
-          pdfPath = await convertFileToPdf({
-            extension,
-            localPath,
-            tempDir: sourceDirectory,
-          });
-        }
-        if (pagesToProcess !== -1) {
-          const totalPages = await getNumberOfPagesFromPdf({ pdfPath });
-          pagesToProcess = Array.isArray(pagesToProcess)
-            ? pagesToProcess
-            : [pagesToProcess];
-          pagesToProcess = pagesToProcess.filter(
-            (page) => page > 0 && page <= totalPages
-          );
-        }
-        imagePaths = await convertPdfToImages({
-          imageDensity,
-          imageHeight,
-          pagesToProcess,
-          pdfPath,
-          tempDir: sourceDirectory,
-        });
-      }
-
-      // Compress images if maxImageSize is specified
-      if (maxImageSize && maxImageSize > 0) {
-        const compressPromises = imagePaths.map(async (imagePath: string) => {
-          const imageBuffer = await fs.readFile(imagePath);
-          const compressedBuffer = await compressImage(
-            imageBuffer,
-            maxImageSize
-          );
-          const originalName = path.basename(
-            imagePath,
-            path.extname(imagePath)
-          );
-          const compressedPath = path.join(
-            sourceDirectory,
-            `${originalName}_compressed.png`
-          );
-          await fs.writeFile(compressedPath, compressedBuffer);
-          return compressedPath;
-        });
-
-        imagePaths = await Promise.all(compressPromises);
-      }
-
-      if (correctOrientation) {
-        await prepareWorkersForImageProcessing({
-          maxTesseractWorkers,
-          numImages: imagePaths.length,
-          scheduler,
-        });
-      }
-
-      // Start processing OCR using LLM
-      const modelInstance = createModel({
-        credentials,
-        llmParams,
-        model,
-        provider: modelProvider,
-      });
-
-      if (!extractOnly) {
-        const processOCR = async (
-          imagePath: string,
-          pageIndex: number,
-          maintainFormat: boolean
-        ): Promise<Page> => {
-          let pageNumber: number;
-          // If we convert all pages, just use the array index
-          if (pagesToProcess === -1) {
-            pageNumber = pageIndex + 1;
-          }
-          // Else if we convert specific pages, use the page number from the parameter
-          else if (Array.isArray(pagesToProcess)) {
-            pageNumber = pagesToProcess[pageIndex];
-          }
-          // Else, the parameter is a number and use it for the page number
-          else {
-            pageNumber = pagesToProcess;
-          }
-
-          const imageBuffer = await fs.readFile(imagePath);
-          const buffers = await cleanupImage({
-            correctOrientation,
-            imageBuffer,
-            scheduler,
-            trimEdges,
-          });
-
-          let page: Page;
-          try {
-            let rawResponse: CompletionResponse | ExtractionResponse;
-            if (customModelFunction) {
-              rawResponse = await runRetries(
-                () =>
-                  customModelFunction({
-                    buffers,
-                    image: imagePath,
-                    maintainFormat,
-                    pageNumber,
-                    priorPage,
-                  }),
-                maxRetries,
-                pageNumber
-              );
-            } else {
-              rawResponse = await runRetries(
-                () =>
-                  modelInstance.getCompletion(OperationMode.OCR, {
-                    buffers,
-                    maintainFormat,
-                    priorPage,
-                    prompt,
-                  }),
-                maxRetries,
-                pageNumber
-              );
-            }
-
-            if (rawResponse.logprobs) {
-              ocrLogprobs.push({
-                page: pageNumber,
-                value: rawResponse.logprobs,
-              });
-            }
-
-            const response = CompletionProcessor.process(
-              OperationMode.OCR,
-              rawResponse
-            );
-
-            inputTokenCount += response.inputTokens;
-            outputTokenCount += response.outputTokens;
-
-            if (isCompletionResponse(OperationMode.OCR, response)) {
-              priorPage = response.content;
-            }
-
-            page = {
-              ...response,
-              page: pageNumber,
-              status: PageStatus.SUCCESS,
-            };
-            numSuccessfulOCRRequests++;
-          } catch (error) {
-            console.error(`Failed to process image ${imagePath}:`, error);
-            if (errorMode === ErrorMode.THROW) {
-              throw error;
-            }
-
-            page = {
-              content: "",
-              contentLength: 0,
-              error: `Failed to process this page ${pageNumber}: ${error}`,
-              page: pageNumber,
-              status: PageStatus.ERROR,
-            };
-            numFailedOCRRequests++;
-          }
-
-          return page;
-        };
-
-        if (maintainFormat) {
-          // Use synchronous processing
-          for (let i = 0; i < imagePaths.length; i++) {
-            const page = await processOCR(imagePaths[i], i, true);
-            pages.push(page);
-            if (page.status === PageStatus.ERROR) {
-              break;
-            }
-          }
-        } else {
-          const limit = pLimit(concurrency);
-          await Promise.all(
-            imagePaths.map((imagePath, i) =>
-              limit(() =>
-                processOCR(imagePath, i, false).then((page) => {
-                  pages[i] = page;
-                })
-              )
-            )
-          );
-        }
-      }
-    }
-
     // Start processing extraction using LLM
     let numSuccessfulExtractionRequests: number = 0;
     let numFailedExtractionRequests: number = 0;
 
-    if (schema) {
+    if (textContent) {
+      // If textContent is provided, split the text into pages based on the schema
+      const textSplitter = new TokenTextSplitter({
+        chunkSize: wordLimitPerPage,
+        chunkOverlap: 0,
+      });
+      const textChunks = await textSplitter.splitText(textContent);
+      pages = textChunks.map((content, index) => ({
+        content,
+        contentLength: content.length,
+        page: index + 1,
+        status: PageStatus.SUCCESS,
+      }));
+
       const extractionModelInstance = createModel({
         credentials: extractionCredentials,
         llmParams: extractionLlmParams,
@@ -402,13 +193,14 @@ export const hadid = async ({
       });
 
       const { fullDocSchema, perPageSchema } = splitSchema(
-        schema,
+        schema as Record<string, unknown>,
         extractPerPage
       );
+
       const extractionTasks: Promise<any>[] = [];
 
       const processExtraction = async (
-        input: string | string[] | HybridInput,
+        input: string,
         pageNumber: number,
         schema: Record<string, unknown>
       ): Promise<Record<string, unknown>> => {
@@ -421,10 +213,9 @@ export const hadid = async ({
                 {
                   input,
                   options: {
-                    correctOrientation,
-                    scheduler,
-                    trimEdges,
                     wordLimitPerPage,
+                    correctOrientation: true,
+                    scheduler,
                   },
                   prompt: extractionPrompt,
                   schema,
@@ -470,41 +261,21 @@ export const hadid = async ({
       };
 
       if (perPageSchema) {
-        const inputs =
-          directImageExtraction && !isStructuredDataFile(localPath)
-            ? imagePaths.map((imagePath) => [imagePath])
-            : enableHybridExtraction
-            ? imagePaths.map((imagePath, index) => ({
-                imagePaths: [imagePath],
-                text: pages[index].content || "",
-              }))
-            : pages.map((page) => page.content || "");
-
+        console.log("Processing per-page schema extraction...");
         extractionTasks.push(
-          ...inputs.map((input, i) =>
-            processExtraction(input, i + 1, perPageSchema)
+          ...pages.map((page, i) =>
+            processExtraction(page.content as string, i + 1, perPageSchema)
           )
         );
       }
 
       if (fullDocSchema) {
-        const input =
-          directImageExtraction && !isStructuredDataFile(localPath)
-            ? imagePaths
-            : enableHybridExtraction
-            ? {
-                imagePaths,
-                text: pages
-                  .map((page, i) =>
-                    i === 0 ? page.content : "\n<hr><hr>\n" + page.content
-                  )
-                  .join(""),
-              }
-            : pages
-                .map((page, i) =>
-                  i === 0 ? page.content : "\n<hr><hr>\n" + page.content
-                )
-                .join("");
+        console.log("Processing full document schema extraction...");
+        const input = pages
+          .map((page, i) =>
+            i === 0 ? page.content : "\n<hr><hr>\n" + page.content
+          )
+          .join("");
 
         extractionTasks.push(
           (async () => {
@@ -518,10 +289,9 @@ export const hadid = async ({
                       {
                         input,
                         options: {
-                          correctOrientation,
-                          scheduler,
-                          trimEdges,
                           wordLimitPerPage,
+                          correctOrientation: true,
+                          scheduler,
                         },
                         prompt: extractionPrompt,
                         schema: fullDocSchema,
@@ -571,61 +341,518 @@ export const hadid = async ({
         });
         return acc;
       }, {});
-    }
 
-    // Write the aggregated markdown to a file
-    const endOfPath = localPath.split("/")[localPath.split("/").length - 1];
-    const rawFileName = endOfPath.split(".")[0];
-    const fileName = rawFileName
-      .replace(/[^\w\s]/g, "")
-      .replace(/\s+/g, "_")
-      .toLowerCase()
-      .substring(0, 255); // Truncate file name to 255 characters to prevent ENAMETOOLONG errors
+      return {
+        completionTime: 0, // No images processed, so no time taken
+        extracted,
+        fileName: "text_content_extraction",
+        inputTokens: inputTokenCount,
+        outputTokens: outputTokenCount,
+        logprobs: {
+          ocr: null,
+          extracted: extractedLogprobs.length ? extractedLogprobs : null,
+        },
+        pages,
+        summary: {
+          totalPages: pages.length,
+          ocr: null,
+          extracted: {
+            successful: numSuccessfulExtractionRequests,
+            failed: numFailedExtractionRequests,
+          },
+        },
+      };
+    } else {
+      // Ensure temp directory exists + create temp folder
+      const rand = Math.floor(1000 + Math.random() * 9000).toString();
+      const tempDirectory = path.join(
+        tempDir || os.tmpdir(),
+        `hadid-temp-${rand}`
+      );
+      const sourceDirectory = path.join(tempDirectory, "source");
+      await fs.ensureDir(sourceDirectory);
 
-    if (outputDir) {
-      const resultFilePath = path.join(outputDir, `${fileName}.md`);
-      const content = pages.map((page) => page.content).join("\n\n");
-      await fs.writeFile(resultFilePath, content);
-    }
+      // Download the PDF. Get file name.
+      const { extension, localPath } = await downloadFile({
+        filePath: filePath as string,
+        tempDir: sourceDirectory,
+      });
 
-    // Cleanup the downloaded PDF file
-    if (cleanup) await fs.remove(tempDirectory);
+      if (!localPath) throw "Failed to save file to local drive";
 
-    // Format JSON response
-    const endTime = new Date();
-    const completionTime = endTime.getTime() - startTime.getTime();
+      // Sort the `pagesToProcess` array to make sure we use the right index
+      // for `formattedPages` as `pdf2pic` always returns images in order
+      if (Array.isArray(pagesToProcess)) {
+        pagesToProcess.sort((a, b) => a - b);
+      }
 
-    return {
-      completionTime,
-      extracted,
-      fileName,
-      inputTokens: inputTokenCount,
-      ...(ocrLogprobs.length || extractedLogprobs.length
-        ? {
-            logprobs: {
-              ocr: !extractOnly ? ocrLogprobs : null,
-              extracted: schema ? extractedLogprobs : null,
-            },
+      // Check if the file is a structured data file (like Excel).
+      // If so, skip the image conversion process and extract the pages directly
+      if (isStructuredDataFile(localPath)) {
+        const modelInstance = createModel({
+          credentials,
+          llmParams,
+          model,
+          provider: modelProvider,
+        });
+
+        pages = await extractPagesFromStructuredDataFile(
+          localPath,
+          convertSpreadsheetToMarkdown,
+          pagesToProcess
+        );
+      } else {
+        // Read the image file or convert the file to images
+        if (
+          extension === ".png" ||
+          extension === ".jpg" ||
+          extension === ".jpeg"
+        ) {
+          imagePaths = [localPath];
+        } else if (extension === ".heic") {
+          const imagePath = await convertHeicToJpeg({
+            localPath,
+            tempDir: sourceDirectory,
+          });
+          imagePaths = [imagePath];
+        } else {
+          let pdfPath: string;
+          const isCFBFile = await checkIsCFBFile(localPath);
+          const isPdf = await checkIsPdfFile(localPath);
+          if ((extension === ".pdf" || isPdf) && !isCFBFile) {
+            pdfPath = localPath;
+          } else {
+            // Convert file to PDF if necessary
+            pdfPath = await convertFileToPdf({
+              extension,
+              localPath,
+              tempDir: sourceDirectory,
+            });
           }
-        : {}),
-      outputTokens: outputTokenCount,
-      pages,
-      summary: {
-        totalPages: pages.length,
-        ocr: !extractOnly
-          ? {
-              successful: numSuccessfulOCRRequests,
-              failed: numFailedOCRRequests,
+          if (pagesToProcess !== -1) {
+            const totalPages = await getNumberOfPagesFromPdf({ pdfPath });
+            pagesToProcess = Array.isArray(pagesToProcess)
+              ? pagesToProcess
+              : [pagesToProcess];
+            pagesToProcess = pagesToProcess.filter(
+              (page) => page > 0 && page <= totalPages
+            );
+          }
+          imagePaths = await convertPdfToImages({
+            imageDensity,
+            imageHeight,
+            pagesToProcess,
+            pdfPath,
+            tempDir: sourceDirectory,
+          });
+        }
+
+        // Compress images if maxImageSize is specified
+        if (maxImageSize && maxImageSize > 0) {
+          const compressPromises = imagePaths.map(async (imagePath: string) => {
+            const imageBuffer = await fs.readFile(imagePath);
+            const compressedBuffer = await compressImage(
+              imageBuffer,
+              maxImageSize
+            );
+            const originalName = path.basename(
+              imagePath,
+              path.extname(imagePath)
+            );
+            const compressedPath = path.join(
+              sourceDirectory,
+              `${originalName}_compressed.png`
+            );
+            await fs.writeFile(compressedPath, compressedBuffer);
+            return compressedPath;
+          });
+
+          imagePaths = await Promise.all(compressPromises);
+        }
+
+        if (correctOrientation) {
+          await prepareWorkersForImageProcessing({
+            maxTesseractWorkers,
+            numImages: imagePaths.length,
+            scheduler,
+          });
+        }
+
+        // Start processing OCR using LLM
+        const modelInstance = createModel({
+          credentials,
+          llmParams,
+          model,
+          provider: modelProvider,
+        });
+
+        if (!extractOnly) {
+          const processOCR = async (
+            imagePath: string,
+            pageIndex: number,
+            maintainFormat: boolean
+          ): Promise<Page> => {
+            let pageNumber: number;
+            // If we convert all pages, just use the array index
+            if (pagesToProcess === -1) {
+              pageNumber = pageIndex + 1;
             }
-          : null,
-        extracted: schema
-          ? {
-              successful: numSuccessfulExtractionRequests,
-              failed: numFailedExtractionRequests,
+            // Else if we convert specific pages, use the page number from the parameter
+            else if (Array.isArray(pagesToProcess)) {
+              pageNumber = pagesToProcess[pageIndex];
             }
-          : null,
-      },
-    };
+            // Else, the parameter is a number and use it for the page number
+            else {
+              pageNumber = pagesToProcess;
+            }
+
+            const imageBuffer = await fs.readFile(imagePath);
+            const buffers = await cleanupImage({
+              correctOrientation,
+              imageBuffer,
+              scheduler,
+              trimEdges,
+            });
+
+            let page: Page;
+            try {
+              let rawResponse: CompletionResponse | ExtractionResponse;
+              if (customModelFunction) {
+                rawResponse = await runRetries(
+                  () =>
+                    customModelFunction({
+                      buffers,
+                      image: imagePath,
+                      maintainFormat,
+                      pageNumber,
+                      priorPage,
+                    }),
+                  maxRetries,
+                  pageNumber
+                );
+              } else {
+                rawResponse = await runRetries(
+                  () =>
+                    modelInstance.getCompletion(OperationMode.OCR, {
+                      buffers,
+                      maintainFormat,
+                      priorPage,
+                      prompt,
+                    }),
+                  maxRetries,
+                  pageNumber
+                );
+              }
+
+              if (rawResponse.logprobs) {
+                ocrLogprobs.push({
+                  page: pageNumber,
+                  value: rawResponse.logprobs,
+                });
+              }
+
+              const response = CompletionProcessor.process(
+                OperationMode.OCR,
+                rawResponse
+              );
+
+              inputTokenCount += response.inputTokens;
+              outputTokenCount += response.outputTokens;
+
+              if (isCompletionResponse(OperationMode.OCR, response)) {
+                priorPage = response.content;
+              }
+
+              page = {
+                ...response,
+                page: pageNumber,
+                status: PageStatus.SUCCESS,
+              };
+              numSuccessfulOCRRequests++;
+            } catch (error) {
+              console.error(`Failed to process image ${imagePath}:`, error);
+              if (errorMode === ErrorMode.THROW) {
+                throw error;
+              }
+
+              page = {
+                content: "",
+                contentLength: 0,
+                error: `Failed to process this page ${pageNumber}: ${error}`,
+                page: pageNumber,
+                status: PageStatus.ERROR,
+              };
+              numFailedOCRRequests++;
+            }
+
+            return page;
+          };
+
+          if (maintainFormat) {
+            // Use synchronous processing
+            for (let i = 0; i < imagePaths.length; i++) {
+              const page = await processOCR(imagePaths[i], i, true);
+              pages.push(page);
+              if (page.status === PageStatus.ERROR) {
+                break;
+              }
+            }
+          } else {
+            const limit = pLimit(concurrency);
+            await Promise.all(
+              imagePaths.map((imagePath, i) =>
+                limit(() =>
+                  processOCR(imagePath, i, false).then((page) => {
+                    pages[i] = page;
+                  })
+                )
+              )
+            );
+          }
+        }
+      }
+
+      if (schema) {
+        const extractionModelInstance = createModel({
+          credentials: extractionCredentials,
+          llmParams: extractionLlmParams,
+          model: extractionModel,
+          provider: extractionModelProvider,
+        });
+
+        const { fullDocSchema, perPageSchema } = splitSchema(
+          schema,
+          extractPerPage
+        );
+
+        console.log(fullDocSchema, perPageSchema);
+
+        const extractionTasks: Promise<any>[] = [];
+
+        const processExtraction = async (
+          input: string | string[] | HybridInput,
+          pageNumber: number,
+          schema: Record<string, unknown>
+        ): Promise<Record<string, unknown>> => {
+          let result: Record<string, unknown> = {};
+          try {
+            await runRetries(
+              async () => {
+                const rawResponse = await extractionModelInstance.getCompletion(
+                  OperationMode.EXTRACTION,
+                  {
+                    input,
+                    options: {
+                      correctOrientation,
+                      scheduler,
+                      trimEdges,
+                      wordLimitPerPage,
+                    },
+                    prompt: extractionPrompt,
+                    schema,
+                  }
+                );
+
+                if (rawResponse.logprobs) {
+                  extractedLogprobs.push({
+                    page: pageNumber,
+                    value: rawResponse.logprobs,
+                  });
+                }
+
+                const response = CompletionProcessor.process(
+                  OperationMode.EXTRACTION,
+                  rawResponse
+                );
+
+                inputTokenCount += response.inputTokens;
+                outputTokenCount += response.outputTokens;
+
+                numSuccessfulExtractionRequests++;
+
+                for (const key of Object.keys(schema?.properties ?? {})) {
+                  const value = response.extracted[key];
+                  if (value !== null && value !== undefined) {
+                    if (!Array.isArray(result[key])) {
+                      result[key] = [];
+                    }
+                    (result[key] as any[]).push({ page: pageNumber, value });
+                  }
+                }
+              },
+              maxRetries,
+              pageNumber
+            );
+          } catch (error) {
+            numFailedExtractionRequests++;
+            throw error;
+          }
+
+          return result;
+        };
+
+        if (perPageSchema) {
+          console.log("Processing per-page schema extraction...");
+
+          const inputs =
+            directImageExtraction && !isStructuredDataFile(localPath)
+              ? imagePaths.map((imagePath) => [imagePath])
+              : enableHybridExtraction
+              ? imagePaths.map((imagePath, index) => ({
+                  imagePaths: [imagePath],
+                  text: pages[index].content || "",
+                }))
+              : pages.map((page) => page.content || "");
+
+          extractionTasks.push(
+            ...inputs.map((input, i) =>
+              processExtraction(input, i + 1, perPageSchema)
+            )
+          );
+        }
+
+        if (fullDocSchema) {
+          console.log("Processing full document schema extraction...");
+
+          const input =
+            directImageExtraction && !isStructuredDataFile(localPath)
+              ? imagePaths
+              : enableHybridExtraction
+              ? {
+                  imagePaths,
+                  text: pages
+                    .map((page, i) =>
+                      i === 0 ? page.content : "\n<hr><hr>\n" + page.content
+                    )
+                    .join(""),
+                }
+              : pages
+                  .map((page, i) =>
+                    i === 0 ? page.content : "\n<hr><hr>\n" + page.content
+                  )
+                  .join("");
+
+          extractionTasks.push(
+            (async () => {
+              let result: Record<string, unknown> = {};
+              try {
+                await runRetries(
+                  async () => {
+                    const rawResponse =
+                      await extractionModelInstance.getCompletion(
+                        OperationMode.EXTRACTION,
+                        {
+                          input,
+                          options: {
+                            correctOrientation,
+                            scheduler,
+                            trimEdges,
+                            wordLimitPerPage,
+                          },
+                          prompt: extractionPrompt,
+                          schema: fullDocSchema,
+                        }
+                      );
+
+                    if (rawResponse.logprobs) {
+                      extractedLogprobs.push({
+                        page: null,
+                        value: rawResponse.logprobs,
+                      });
+                    }
+
+                    const response = CompletionProcessor.process(
+                      OperationMode.EXTRACTION,
+                      rawResponse
+                    );
+
+                    inputTokenCount += response.inputTokens;
+                    outputTokenCount += response.outputTokens;
+                    numSuccessfulExtractionRequests++;
+                    result = response.extracted;
+                  },
+                  maxRetries,
+                  0
+                );
+                return result;
+              } catch (error) {
+                numFailedExtractionRequests++;
+                throw error;
+              }
+            })()
+          );
+        }
+
+        const results = await Promise.all(extractionTasks);
+        extracted = results.reduce((acc, result) => {
+          Object.entries(result || {}).forEach(([key, value]) => {
+            if (!acc[key]) {
+              acc[key] = [];
+            }
+            if (Array.isArray(value)) {
+              acc[key].push(...value);
+            } else {
+              acc[key] = value;
+            }
+          });
+          return acc;
+        }, {});
+      }
+
+      // Write the aggregated markdown to a file
+      const endOfPath = localPath.split("/")[localPath.split("/").length - 1];
+      const rawFileName = endOfPath.split(".")[0];
+      const fileName = rawFileName
+        .replace(/[^\w\s]/g, "")
+        .replace(/\s+/g, "_")
+        .toLowerCase()
+        .substring(0, 255); // Truncate file name to 255 characters to prevent ENAMETOOLONG errors
+
+      if (outputDir) {
+        const resultFilePath = path.join(outputDir, `${fileName}.md`);
+        const content = pages.map((page) => page.content).join("\n\n");
+        await fs.writeFile(resultFilePath, content);
+      }
+
+      // Cleanup the downloaded PDF file
+      if (cleanup) await fs.remove(tempDirectory);
+
+      // Format JSON response
+      const endTime = new Date();
+      const completionTime = endTime.getTime() - startTime.getTime();
+
+      return {
+        completionTime,
+        extracted,
+        fileName,
+        inputTokens: inputTokenCount,
+        ...(ocrLogprobs.length || extractedLogprobs.length
+          ? {
+              logprobs: {
+                ocr: !extractOnly ? ocrLogprobs : null,
+                extracted: schema ? extractedLogprobs : null,
+              },
+            }
+          : {}),
+        outputTokens: outputTokenCount,
+        pages,
+        summary: {
+          totalPages: pages.length,
+          ocr: !extractOnly
+            ? {
+                successful: numSuccessfulOCRRequests,
+                failed: numFailedOCRRequests,
+              }
+            : null,
+          extracted: schema
+            ? {
+                successful: numSuccessfulExtractionRequests,
+                failed: numFailedExtractionRequests,
+              }
+            : null,
+        },
+      };
+    }
   } finally {
     if (correctOrientation && scheduler) {
       terminateScheduler(scheduler);

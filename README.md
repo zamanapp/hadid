@@ -129,7 +129,9 @@ const result = await hadid({
   schema: undefined, // Schema for structured data extraction
   tempDir: "/os/tmp", // Directory to use for temporary files (default: system temp directory)
   trimEdges: true, // True by default, trims pixels from all edges that contain values similar to the given background color, which defaults to that of the top-left pixel
-  convertSpreadsheetToMarkdown = true, // True by default, converts the spreadsheet to markdown format from HTML, if False then keeps it in HTML format. This is done using on device parsing, no LLM involved.
+  convertSpreadsheetToMarkdown: true, // True by default, converts the spreadsheet to markdown format from HTML, if False then keeps it in HTML format. This is done using on device parsing, no LLM involved.
+  wordLimitPerPage: 200000 // 200,000 by default, limit for input into models, when provided textContent, textContent will be split into pages, each with max word count of wordLimitPerPage
+  textContent: "Raw text content goes here" // Raw text content that data can be extracted from based on the `schema` provided
 });
 ```
 

@@ -23,7 +23,7 @@ export interface HadidArgs {
   extractionPrompt?: string;
   extractOnly?: boolean;
   extractPerPage?: string[];
-  filePath: string;
+  filePath?: string;
   imageDensity?: number;
   imageHeight?: number;
   llmParams?: Partial<LLMParams>;
@@ -42,6 +42,7 @@ export interface HadidArgs {
   trimEdges?: boolean;
   convertSpreadsheetToMarkdown?: boolean;
   wordLimitPerPage?: number;
+  textContent?: string;
 }
 
 export interface HadidOutput {
