@@ -625,8 +625,6 @@ export const hadid = async ({
           extractPerPage
         );
 
-        console.log(fullDocSchema, perPageSchema);
-
         const extractionTasks: Promise<any>[] = [];
 
         const processExtraction = async (
