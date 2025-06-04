@@ -49,7 +49,12 @@ Formatting Preservation
 `;
 
   const result = await hadid({
-    filePath: "shared/inputs/0002.pdf", // Replace with the path to your PDF file
+    // filePath: "shared/inputs/0002.pdf", // Replace with the path to your PDF file
+    imageFilePaths: [
+      "shared/inputs/0001.png",
+      "shared/inputs/0005.png",
+      "shared/inputs/0006.png",
+    ],
     // "shared/inputs/spreadsheet_test.xls", // Replace with the path to your XLS file
     credentials: {
       apiKey: process.env.CLAUDE_API_KEY as string,
@@ -59,12 +64,13 @@ Formatting Preservation
     pagesToProcess: Array.from({ length: 1 }, (_, i) => i + 1),
     // prompt,
     schema: {
-      tags: `
-You are a tagging assistant. Your task is to extract up to 15 relevant and distinct tags from the provided text. Return only a JSON array of strings. Maintain the original casing and spacing of each tag. Do not include duplicates. Do not add any explanations, headings, or other text—only the JSON array.
-
-Example output:
-
-["Machine Learning", "Neural Networks", "Training Data", "Supervised Learning"]`,
+      tags: `You are a tagging assistant. Your task is to extract up to 15 relevant and distinct tags from the provided text. Return only a JSON array of strings. Maintain the original casing and spacing of each tag. Do not include duplicates. Do not add any explanations, headings, or other text—only the JSON array.
+  
+  Example output:
+  
+  ["Machine Learning", "Neural Networks", "Training Data", "Supervised Learning"]`,
+      summary: `You are a summarization assistant. Your task is to provide a concise summary of the provided text. The summary should capture the main points and key information without unnecessary details. Return only the summary text with no additional explanations or formatting.`,
+      title: `You are a title extraction assistant. Your task is to extract the main title from the provided text. The title should be concise and reflect the core topic of the content. Return only the title text with no additional explanations or formatting.`,
     },
     convertSpreadsheetToMarkdown: true,
     wordLimitPerPage: 10000,

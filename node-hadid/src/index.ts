@@ -81,6 +81,7 @@ export const hadid = async ({
   convertSpreadsheetToMarkdown = true,
   wordLimitPerPage = 200000,
   textContent,
+  imageFilePaths,
 }: HadidArgs): Promise<HadidOutput> => {
   let extracted: Record<string, unknown> | null = null;
   let extractedLogprobs: LogprobPage[] = [];
@@ -110,9 +111,12 @@ export const hadid = async ({
   }
   if (
     (!filePath || !filePath.length) &&
-    (!textContent || !textContent.length)
+    (!textContent || !textContent.length) &&
+    (!imageFilePaths || !imageFilePaths.length)
   ) {
-    throw new Error("Missing file path or text content");
+    throw new Error(
+      "You must provide either a filePath, textContent, or imageFilePaths"
+    );
   }
 
   if (textContent && textContent.length) {
@@ -133,6 +137,12 @@ export const hadid = async ({
         "Schema is required when textContent is provided for extraction"
       );
     }
+  }
+
+  if ((imageFilePaths && filePath) || (imageFilePaths && textContent)) {
+    throw new Error(
+      "You cannot provide both imageFilePaths and filePath or textContent. Please provide only one of them."
+    );
   }
 
   if (enableHybridExtraction && (directImageExtraction || extractOnly)) {
@@ -363,6 +373,9 @@ export const hadid = async ({
         },
       };
     } else {
+      let extension: string = "";
+      let localPath: string = "";
+
       // Ensure temp directory exists + create temp folder
       const rand = Math.floor(1000 + Math.random() * 9000).toString();
       const tempDirectory = path.join(
@@ -372,13 +385,17 @@ export const hadid = async ({
       const sourceDirectory = path.join(tempDirectory, "source");
       await fs.ensureDir(sourceDirectory);
 
-      // Download the PDF. Get file name.
-      const { extension, localPath } = await downloadFile({
-        filePath: filePath as string,
-        tempDir: sourceDirectory,
-      });
+      if (!imageFilePaths) {
+        // Download the PDF. Get file name.
+        const file = await downloadFile({
+          filePath: filePath as string,
+          tempDir: sourceDirectory,
+        });
+        localPath = file.localPath;
+        extension = file.extension;
 
-      if (!localPath) throw "Failed to save file to local drive";
+        if (!localPath) throw "Failed to save file to local drive";
+      }
 
       // Sort the `pagesToProcess` array to make sure we use the right index
       // for `formattedPages` as `pdf2pic` always returns images in order
@@ -389,13 +406,6 @@ export const hadid = async ({
       // Check if the file is a structured data file (like Excel).
       // If so, skip the image conversion process and extract the pages directly
       if (isStructuredDataFile(localPath)) {
-        const modelInstance = createModel({
-          credentials,
-          llmParams,
-          model,
-          provider: modelProvider,
-        });
-
         pages = await extractPagesFromStructuredDataFile(
           localPath,
           convertSpreadsheetToMarkdown,
@@ -403,7 +413,28 @@ export const hadid = async ({
         );
       } else {
         // Read the image file or convert the file to images
-        if (
+        if (imageFilePaths && imageFilePaths.length > 0) {
+          for (const imageFilePath of imageFilePaths) {
+            const fileExtension = path.extname(imageFilePath).toLowerCase();
+            if (
+              fileExtension === ".png" ||
+              fileExtension === ".jpg" ||
+              fileExtension === ".jpeg"
+            ) {
+              imagePaths.push(imageFilePath);
+            } else if (fileExtension === ".heic") {
+              const imagePath = await convertHeicToJpeg({
+                localPath: imageFilePath,
+                tempDir: sourceDirectory,
+              });
+              imagePaths.push(imagePath);
+            } else {
+              throw new Error(
+                `Unsupported image file format: ${fileExtension}. Supported formats are .png, .jpg, .jpeg, and .heic.`
+              );
+            }
+          }
+        } else if (
           extension === ".png" ||
           extension === ".jpg" ||
           extension === ".jpeg"

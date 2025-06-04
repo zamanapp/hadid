@@ -43,6 +43,7 @@ export interface HadidArgs {
   convertSpreadsheetToMarkdown?: boolean;
   wordLimitPerPage?: number;
   textContent?: string;
+  imageFilePaths?: string[];
 }
 
 export interface HadidOutput {
