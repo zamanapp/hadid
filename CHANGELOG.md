@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/zamanapp/hadid/compare/v1.3.0...v1.4.0) (2025-06-04)
+
+
+### Features
+
+* add imageFilePaths to HadidArgs interface and update hadid function to handle image inputs ([1c1a13e](https://github.com/zamanapp/hadid/commit/1c1a13eba464fae61f598f38aaaa5f0388a1c5ad))
+
 # [1.3.0](https://github.com/zamanapp/hadid/compare/v1.2.2...v1.3.0) (2025-06-01)
 
 
