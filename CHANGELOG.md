@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/zamanapp/hadid/compare/v1.4.0...v1.5.0) (2025-06-10)
+
+
+### Features
+
+* update image handling to dynamically set media type based on file buffer ([f02fe3f](https://github.com/zamanapp/hadid/commit/f02fe3f6182b8a295d35d377987c92e07e48c4f7))
+
 # [1.4.0](https://github.com/zamanapp/hadid/compare/v1.3.0...v1.4.0) (2025-06-04)
 
 
