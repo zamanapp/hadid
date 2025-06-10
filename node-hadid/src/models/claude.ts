@@ -74,11 +74,13 @@ export default class ClaudeModel implements ModelInterface {
             trimEdges: options?.trimEdges ?? false,
           });
 
+          const type = await fileType.fromBuffer(buffers[0]);
+
           return buffers.map((buffer) => ({
             type: "image",
             source: {
               type: "base64",
-              media_type: "image/png",
+              media_type: type?.mime || "image/png",
               data: encodeImageToBase64(buffer),
             },
           }));

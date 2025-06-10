@@ -67,8 +67,12 @@ export default class GoogleModel implements ModelInterface {
             scheduler: options?.scheduler ?? null,
             trimEdges: options?.trimEdges ?? false,
           });
+          const type = await fileType.fromBuffer(buffers[0]);
           return buffers.map((buffer) =>
-            createPartFromBase64(encodeImageToBase64(buffer), "image/png")
+            createPartFromBase64(
+              encodeImageToBase64(buffer),
+              type?.mime || "image/png"
+            )
           );
         })
       );

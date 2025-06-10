@@ -71,9 +71,12 @@ export default class AzureModel implements ModelInterface {
             scheduler: options?.scheduler ?? null,
             trimEdges: options?.trimEdges ?? false,
           });
+          const type = await fileType.fromBuffer(buffers[0]);
           return buffers.map((buffer) => ({
             image_url: {
-              url: `data:image/png;base64,${encodeImageToBase64(buffer)}`,
+              url: `data:${
+                type?.mime || "image/png"
+              };base64,${encodeImageToBase64(buffer)}`,
             },
             type: "image_url",
           }));

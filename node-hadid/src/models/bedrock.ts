@@ -80,10 +80,12 @@ export default class BedrockModel implements ModelInterface {
             scheduler: options?.scheduler ?? null,
             trimEdges: options?.trimEdges ?? false,
           });
+
+          const type = await fileType.fromBuffer(buffers[0]);
           return buffers.map((buffer) => ({
             source: {
               data: encodeImageToBase64(buffer),
-              media_type: "image/png",
+              media_type: type?.mime || "image/png",
               type: "base64",
             },
             type: "image",
