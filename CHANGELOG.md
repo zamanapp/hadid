@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/zamanapp/hadid/compare/v1.5.0...v1.6.0) (2025-06-10)
+
+
+### Features
+
+* enhance extraction response instructions to ensure valid JSON output ([2e288e0](https://github.com/zamanapp/hadid/commit/2e288e0bf64878e9db9c6674aab52adf7f21c5a7))
+
 # [1.5.0](https://github.com/zamanapp/hadid/compare/v1.4.0...v1.5.0) (2025-06-10)
 
 
