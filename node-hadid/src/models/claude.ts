@@ -201,18 +201,13 @@ export default class ClaudeModel implements ModelInterface {
         system: `
 You are an assistant that extracts information from user documents uploaded. Your output must strictly adhere to the following JSON schema: ${JSON.stringify(
           schema
-        )}. 
+        )}.
 
 CRITICAL: Return ONLY the JSON object. Do not include any text, explanations, markdown formatting, code blocks, or other content before or after the JSON. Your entire response must be valid JSON that matches the schema exactly.`,
         messages,
       });
 
       const data = response;
-
-      console.log(
-        "Claude extraction response:",
-        data.content[0].type === "text" ? data.content[0].text : "{}"
-      );
 
       const result: ExtractionResponse = {
         extracted: JSON.parse(
