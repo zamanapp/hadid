@@ -29,6 +29,7 @@ Hadid is available as a npm package
 | ------------------------- | --------------------------- | -------------------------- |
 | PDF Processing            | ✓ (requires graphicsmagick) | ✓ (requires poppler)       |
 | Image Processing          | ✓                           | ✓                          |
+| Direct Image Input        | ✓ (`imageFilePaths`)        | ✗                          |
 | OpenAI Support            | ✓                           | ✓                          |
 | Azure OpenAI Support      | ✓                           | ✓                          |
 | AWS Bedrock Support       | ✓                           | ✓                          |
@@ -94,6 +95,23 @@ const result = await hadid({
 });
 ```
 
+**From image file paths**
+
+```ts
+import { hadid } from "hadid";
+
+const result = await hadid({
+  imageFilePaths: [
+    "https://example.com/image1.png",
+    "./local-image2.jpg",
+    path.resolve(__dirname, "./image3.png"),
+  ],
+  credentials: {
+    apiKey: process.env.OPENAI_API_KEY,
+  },
+});
+```
+
 ### Parameters
 
 ```ts
@@ -130,8 +148,9 @@ const result = await hadid({
   tempDir: "/os/tmp", // Directory to use for temporary files (default: system temp directory)
   trimEdges: true, // True by default, trims pixels from all edges that contain values similar to the given background color, which defaults to that of the top-left pixel
   convertSpreadsheetToMarkdown: true, // True by default, converts the spreadsheet to markdown format from HTML, if False then keeps it in HTML format. This is done using on device parsing, no LLM involved.
-  wordLimitPerPage: 200000 // 200,000 by default, limit for input into models, when provided textContent, textContent will be split into pages, each with max word count of wordLimitPerPage
-  textContent: "Raw text content goes here" // Raw text content that data can be extracted from based on the `schema` provided
+  wordLimitPerPage: 200000, // 200,000 by default, limit for input into models, when provided textContent, textContent will be split into pages, each with max word count of wordLimitPerPage
+  textContent: "Raw text content goes here", // Raw text content that data can be extracted from based on the `schema` provided
+  imageFilePaths: ["path/to/image1.png", "path/to/image2.jpg"], // Array of image file paths (local paths or URLs) to process directly. Cannot be used with filePath or textContent
 });
 ```
 
@@ -487,6 +506,14 @@ HadidOutput(
 ## Supported File Types
 
 We use a combination of `libreoffice` and `graphicsmagick` to do document => image conversion. For non-image / non-PDF files, we use libreoffice to convert that file to a PDF, and then to an image.
+
+### Supported Image Formats (for `imageFilePaths`)
+
+When using the `imageFilePaths` parameter, the following image formats are supported:
+
+- **PNG** (.png)
+- **JPEG** (.jpg, .jpeg)
+- **HEIC** (.heic) - automatically converted to JPEG during processing
 
 ```js
 [

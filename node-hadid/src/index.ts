@@ -395,6 +395,17 @@ export const hadid = async ({
         extension = file.extension;
 
         if (!localPath) throw "Failed to save file to local drive";
+      } else if (imageFilePaths) {
+        // Download each image file path if it's a URL
+        const downloadPromises = imageFilePaths.map(async (imagePath) => {
+          const file = await downloadFile({
+            filePath: imagePath,
+            tempDir: sourceDirectory,
+          });
+          return file.localPath;
+        });
+        const downloadedPaths = await Promise.all(downloadPromises);
+        imageFilePaths = downloadedPaths;
       }
 
       // Sort the `pagesToProcess` array to make sure we use the right index
