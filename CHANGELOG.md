@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/zamanapp/hadid/compare/v1.6.0...v1.7.0) (2025-07-13)
+
+
+### Features
+
+* add functionality to download image files from URLs in hadid function ([70a3ee2](https://github.com/zamanapp/hadid/commit/70a3ee20a083431510a0408f8f4ca18fae8474c0))
+
 # [1.6.0](https://github.com/zamanapp/hadid/compare/v1.5.0...v1.6.0) (2025-06-10)
 
 
