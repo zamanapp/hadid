@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/zamanapp/hadid/compare/v1.7.0...v1.8.0) (2025-07-15)
+
+
+### Features
+
+* add support for converting WebP images to JPEG in hadid function ([18d5dd4](https://github.com/zamanapp/hadid/commit/18d5dd4beabc4faa93c8bea075a6ad7a0a56f70f))
+
 # [1.7.0](https://github.com/zamanapp/hadid/compare/v1.6.0...v1.7.0) (2025-07-13)
 
 
