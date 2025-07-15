@@ -16,6 +16,7 @@ import {
   convertFileToPdf,
   convertHeicToJpeg,
   convertPdfToImages,
+  convertWebpToJpeg,
   downloadFile,
   extractPagesFromStructuredDataFile,
   getNumberOfPagesFromPdf,
@@ -439,9 +440,15 @@ export const hadid = async ({
                 tempDir: sourceDirectory,
               });
               imagePaths.push(imagePath);
+            } else if (fileExtension === ".webp") {
+              const imagePath = await convertWebpToJpeg({
+                localPath: imageFilePath,
+                tempDir: sourceDirectory,
+              });
+              imagePaths.push(imagePath);
             } else {
               throw new Error(
-                `Unsupported image file format: ${fileExtension}. Supported formats are .png, .jpg, .jpeg, and .heic.`
+                `Unsupported image file format: ${fileExtension}. Supported formats are .png, .jpg, .jpeg, .heic, and .webp.`
               );
             }
           }

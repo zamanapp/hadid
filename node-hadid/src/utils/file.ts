@@ -14,7 +14,7 @@ import path from "path";
 import pdf from "pdf-parse";
 import util from "util";
 import xlsx from "xlsx";
-
+import sharp from "sharp";
 import { ASPECT_RATIO_THRESHOLD } from "../constants";
 import {
   ConvertPdfOptions,
@@ -122,6 +122,29 @@ export const convertHeicToJpeg = async ({
     return jpegPath;
   } catch (err) {
     console.error(`Error converting .heic to .jpeg:`, err);
+    throw err;
+  }
+};
+
+// Convert WebP file to JPEG
+export const convertWebpToJpeg = async ({
+  localPath,
+  tempDir,
+}: {
+  localPath: string;
+  tempDir: string;
+}): Promise<string> => {
+  try {
+    const jpegPath = path.join(
+      tempDir,
+      `${path.basename(localPath, ".webp")}.jpg`
+    );
+
+    await sharp(localPath).jpeg({ quality: 90 }).toFile(jpegPath);
+
+    return jpegPath;
+  } catch (err) {
+    console.error(`Error converting .webp to .jpeg:`, err);
     throw err;
   }
 };
