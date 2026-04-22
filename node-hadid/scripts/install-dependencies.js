@@ -1,14 +1,26 @@
 const { exec } = require("child_process");
 const { promisify } = require("util");
+const fs = require("fs");
 
 const execPromise = promisify(exec);
 
+const readOsRelease = () => {
+  try {
+    return fs.readFileSync("/etc/os-release", "utf8");
+  } catch {
+    return "";
+  }
+};
+
+const isAlpineLinux = () => {
+  if (process.platform !== "linux") return false;
+  const osRelease = readOsRelease();
+  return /(^|\n)ID=alpine(\n|$)/.test(osRelease);
+};
+
 const installPackage = async (command, packageName) => {
   try {
-    const { stdout, stderr } = await execPromise(command);
-    if (stderr) {
-      throw new Error(`Failed to install ${packageName}: ${stderr}`);
-    }
+    const { stdout } = await execPromise(command);
     return stdout;
   } catch (error) {
     throw new Error(`Failed to install ${packageName}: ${error.message}`);
@@ -28,6 +40,7 @@ const isSudoAvailable = async () => {
 const checkAndInstall = async () => {
   try {
     const sudoAvailable = await isSudoAvailable();
+    const alpine = isAlpineLinux();
 
     // Check and install Ghostscript
     try {
@@ -36,9 +49,13 @@ const checkAndInstall = async () => {
       if (process.platform === "darwin") {
         await installPackage("brew install ghostscript", "Ghostscript");
       } else if (process.platform === "linux") {
-        const command = sudoAvailable
-          ? "sudo apt-get update && sudo apt-get install -y ghostscript"
-          : "apt-get update && apt-get install -y ghostscript";
+        const command = alpine
+          ? sudoAvailable
+            ? "sudo apk add --no-cache ghostscript"
+            : "apk add --no-cache ghostscript"
+          : sudoAvailable
+            ? "sudo apt-get update && sudo apt-get install -y ghostscript"
+            : "apt-get update && apt-get install -y ghostscript";
         await installPackage(command, "Ghostscript");
       } else {
         throw new Error(
@@ -54,9 +71,13 @@ const checkAndInstall = async () => {
       if (process.platform === "darwin") {
         await installPackage("brew install graphicsmagick", "GraphicsMagick");
       } else if (process.platform === "linux") {
-        const command = sudoAvailable
-          ? "sudo apt-get update && sudo apt-get install -y graphicsmagick"
-          : "apt-get update && apt-get install -y graphicsmagick";
+        const command = alpine
+          ? sudoAvailable
+            ? "sudo apk add --no-cache graphicsmagick"
+            : "apk add --no-cache graphicsmagick"
+          : sudoAvailable
+            ? "sudo apt-get update && sudo apt-get install -y graphicsmagick"
+            : "apt-get update && apt-get install -y graphicsmagick";
         await installPackage(command, "GraphicsMagick");
       } else {
         throw new Error(
@@ -72,9 +93,13 @@ const checkAndInstall = async () => {
       if (process.platform === "darwin") {
         await installPackage("brew install --cask libreoffice", "LibreOffice");
       } else if (process.platform === "linux") {
-        const command = sudoAvailable
-          ? "sudo apt-get update && sudo apt-get install -y libreoffice"
-          : "apt-get update && apt-get install -y libreoffice";
+        const command = alpine
+          ? sudoAvailable
+            ? "sudo apk add --no-cache libreoffice"
+            : "apk add --no-cache libreoffice"
+          : sudoAvailable
+            ? "sudo apt-get update && sudo apt-get install -y libreoffice"
+            : "apt-get update && apt-get install -y libreoffice";
         await installPackage(command, "LibreOffice");
       } else {
         throw new Error(
@@ -90,9 +115,13 @@ const checkAndInstall = async () => {
       if (process.platform === "darwin") {
         await installPackage("brew install poppler", "Poppler");
       } else if (process.platform === "linux") {
-        const command = sudoAvailable
-          ? "sudo apt-get update && sudo apt-get install -y poppler-utils"
-          : "apt-get update && apt-get install -y poppler-utils";
+        const command = alpine
+          ? sudoAvailable
+            ? "sudo apk add --no-cache poppler-utils"
+            : "apk add --no-cache poppler-utils"
+          : sudoAvailable
+            ? "sudo apt-get update && sudo apt-get install -y poppler-utils"
+            : "apt-get update && apt-get install -y poppler-utils";
         await installPackage(command, "Poppler");
       } else {
         throw new Error(
